@@ -44,7 +44,11 @@ public class SecurityConfig {
                                 "/api/auth/signup",
                                 "/api/auth/login",
                                 "/api/auth/token/refresh",
-                                "/api/test/**"
+                                "/api/test/**",
+                                // Swagger UI / API 문서
+                                "/swagger-ui/**",
+                                "/swagger-ui.html",
+                                "/v3/api-docs/**"
                         ).permitAll()
                         // 그 외(로그아웃 포함)는 인증 필요
                         .anyRequest().authenticated()
