@@ -1,7 +1,3 @@
-package com.sookmyung.swapclass.domain.notification.entity;
-
-public class Report {
-    
 package com.sookmyung.swapclass.domain.report.entity;
 
 import com.sookmyung.swapclass.domain.user.entity.User;
@@ -36,7 +32,7 @@ public class Report {
     private ReportReason reason;
 
     @Column(name = "image_urls")
-    private String imageUrls; // JSON 배열로 저장
+    private String imageUrls;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
