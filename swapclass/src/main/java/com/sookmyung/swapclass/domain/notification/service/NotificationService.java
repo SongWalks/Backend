@@ -1,7 +1,9 @@
 package com.sookmyung.swapclass.domain.notification.service;
 
 import com.sookmyung.swapclass.domain.notification.entity.Notification;
+import com.sookmyung.swapclass.domain.notification.entity.NotificationType;
 import com.sookmyung.swapclass.domain.notification.repository.NotificationRepository;
+import com.sookmyung.swapclass.domain.user.entity.User;
 import com.sookmyung.swapclass.global.exception.CustomException;
 import com.sookmyung.swapclass.global.exception.ErrorCode;
 import lombok.RequiredArgsConstructor;
