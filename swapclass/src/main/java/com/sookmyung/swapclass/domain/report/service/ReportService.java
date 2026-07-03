@@ -7,6 +7,7 @@ import com.sookmyung.swapclass.domain.user.entity.User;
 import com.sookmyung.swapclass.domain.user.repository.UserRepository;
 import com.sookmyung.swapclass.global.exception.CustomException;
 import com.sookmyung.swapclass.global.exception.ErrorCode;
+import com.sookmyung.swapclass.infra.discord.DiscordWebhookService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -18,6 +19,7 @@ public class ReportService {
 
     private final ReportRepository reportRepository;
     private final UserRepository userRepository;
+    private final DiscordWebhookService discordWebhookService;
 
     @Transactional
     public Long createReport(Long reporterId, ReportRequest request) {
@@ -36,6 +38,10 @@ public class ReportService {
                 .build();
 
         reportRepository.save(report);
+
+        // Discord Webhook 발송
+        discordWebhookService.sendReportNotification(report);
+
         return report.getId();
     }
 }
