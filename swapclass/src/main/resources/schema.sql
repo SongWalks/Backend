@@ -56,3 +56,15 @@ CREATE TABLE reports (
     FOREIGN KEY (reporter_id) REFERENCES users(id),
     FOREIGN KEY (reported_user_id) REFERENCES users(id)
 );
+
+-- ===== user_blocks =====
+CREATE TABLE user_blocks (
+                             id BIGINT NOT NULL AUTO_INCREMENT,
+                             blocker_id BIGINT NOT NULL,
+                             blocked_id BIGINT NOT NULL,
+                             created_at DATETIME NOT NULL,
+                             PRIMARY KEY (id),
+                             UNIQUE KEY uq_user_blocks (blocker_id, blocked_id),
+                             FOREIGN KEY (blocker_id) REFERENCES users(id),
+                             FOREIGN KEY (blocked_id) REFERENCES users(id)
+);
