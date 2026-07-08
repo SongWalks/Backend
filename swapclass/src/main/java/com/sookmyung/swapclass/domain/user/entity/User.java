@@ -33,10 +33,12 @@ public class User {
     @Column(name = "manner_warning_count")
     private int mannerWarningCount;
 
+    //계정의 현재 상태 (정상/제재로 정지된 상태/ 회원 탈퇴)
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private UserStatus status;
 
+    //계정 정지 기간
     @Column(name = "suspended_until")
     private LocalDateTime suspendedUntil;
 
