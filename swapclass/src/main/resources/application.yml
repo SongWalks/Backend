@@ -1,6 +1,18 @@
 spring:
   profiles:
     active: local
+  datasource:
+    url: "jdbc:mysql://localhost:3306/swapclass?serverTimezone=Asia/Seoul&characterEncoding=UTF-8"
+    username: root
+    password: "0000"
+    driver-class-name: com.mysql.cj.jdbc.Driver
+
+springdoc:
+  swagger-ui:
+    path: /swagger-ui.html
+  api-docs:
+    path: /v3/api-docs
+  packages-to-scan: com.sookmyung.swapclass
 
   jpa:
     hibernate:
@@ -15,5 +27,16 @@ spring:
     init:
       mode: never
 
+mail:
+  username: "발송용지메일@gmail.com"
+  password: "앱비밀번호16자리"      # 공백 없이
+
+jwt:
+  secret: "여기에_아주_긴_랜덤_문자열_최소32바이트"
+
 server:
   port: 8080
+
+discord:
+  webhook:
+    url: "https://discordapp.com/api/webhooks/1522478731913072640/VHJIigGIJ4ic48RE6WUSXj2GEXbF_X0OqB6K5x9vqJLn9Ta7Gi-Ech4Vo7WIDj2Kk_99"
