@@ -51,7 +51,6 @@ public class NotificationService {
     }
 
     // ─── 공통 알림 생성 ───────────────────────────────────────
-
     @Transactional
     public void createNotification(User user, NotificationType type, String title, String body, Long relatedId) {
         Notification notification = Notification.builder()
