@@ -1,7 +1,6 @@
 spring:
   profiles:
     active: local
-
   jpa:
     hibernate:
       ddl-auto: validate
@@ -10,7 +9,6 @@ spring:
         dialect: org.hibernate.dialect.MySQLDialect
         format_sql: true
     show-sql: true
-
   sql:
     init:
       mode: never
@@ -29,6 +27,12 @@ spring:
           auth: true
           starttls:
             enable: true
+springdoc:
+  swagger-ui:
+    path: /swagger-ui.html
+  api-docs:
+    path: /v3/api-docs
+  packages-to-scan: com.sookmyung.swapclass
 
 server:
   port: 8080
