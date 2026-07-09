@@ -2,6 +2,7 @@ package com.sookmyung.swapclass.domain.post.controller;
 
 import com.sookmyung.swapclass.domain.post.dto.request.PostCreateRequest;
 import com.sookmyung.swapclass.domain.post.dto.response.PostCreateResponse;
+import com.sookmyung.swapclass.domain.post.dto.response.PostDetailResponse;
 import com.sookmyung.swapclass.domain.post.service.PostService;
 import com.sookmyung.swapclass.global.response.ApiResponse;
 import jakarta.validation.Valid;
@@ -26,5 +27,14 @@ public class PostController {
     ) {
         PostCreateResponse response = postService.createPost(userId, request);
         return ApiResponse.success(response, "게시글이 등록되었습니다.");
+    }
+
+    // 게시글 상세 조회
+    @GetMapping("/{postId}")
+    public ApiResponse<PostDetailResponse> getPost(
+            @AuthenticationPrincipal Long userId,
+            @PathVariable Long postId
+    ) {
+        return ApiResponse.success(postService.getPost(postId, userId));
     }
 }

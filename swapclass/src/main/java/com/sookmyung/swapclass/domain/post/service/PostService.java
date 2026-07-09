@@ -4,7 +4,9 @@ import com.sookmyung.swapclass.domain.course.entity.Course;
 import com.sookmyung.swapclass.domain.course.repository.CourseRepository;
 import com.sookmyung.swapclass.domain.post.dto.request.PostCreateRequest;
 import com.sookmyung.swapclass.domain.post.dto.response.PostCreateResponse;
+import com.sookmyung.swapclass.domain.post.dto.response.PostDetailResponse;
 import com.sookmyung.swapclass.domain.post.entity.Post;
+import com.sookmyung.swapclass.domain.post.entity.PostStatus;
 import com.sookmyung.swapclass.domain.post.entity.PostWantedCourse;
 import com.sookmyung.swapclass.domain.post.repository.PostRepository;
 import com.sookmyung.swapclass.domain.user.entity.User;
@@ -62,6 +64,20 @@ public class PostService {
         //응답 반환
         Post saved = postRepository.save(post);
         return PostCreateResponse.from(saved);
+    }
+
+    // 게시글 상세 조회
+    // @Transactional(readOnly) 안에서 DTO 변환 → LAZY(user·discardCourse·wantedCourses) 로딩 가능
+    public PostDetailResponse getPost(Long postId, Long currentUserId) {
+        Post post = postRepository.findById(postId)
+                .orElseThrow(() -> new CustomException(ErrorCode.POST_NOT_FOUND));
+
+        // soft delete 된 글은 없는 것으로 취급 (명세: 삭제/롤백 글은 404)
+        if (post.getStatus() == PostStatus.DELETED) {
+            throw new CustomException(ErrorCode.POST_NOT_FOUND);
+        }
+
+        return PostDetailResponse.of(post, currentUserId);
     }
 
     // 원하는 과목 자체 중복 금지 + 버릴 과목을 원하는 과목으로 등록 금지
