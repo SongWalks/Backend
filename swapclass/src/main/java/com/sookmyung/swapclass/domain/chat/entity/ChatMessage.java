@@ -11,7 +11,7 @@ import java.time.LocalDateTime;
 
 @Entity
 @Table(
-        name = "chat_messages",
+        name = "messages",
         indexes = @Index(name = "idx_room_id", columnList = "chat_room_id, id")
 )
 @Getter
@@ -26,20 +26,17 @@ public class ChatMessage {
     @JoinColumn(name = "chat_room_id", nullable = false)
     private ChatRoom chatRoom;
 
+    // 시스템 메시지(교환 확정 안내 등)는 발신자 없음 → nullable
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "sender_id", nullable = false)
+    @JoinColumn(name = "sender_user_id")
     private User sender;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private MessageType type;
 
-    @Column(nullable = false, length = 1000)
+    @Column(nullable = false, columnDefinition = "TEXT")
     private String content;
-
-    // 읽음 시각 (안 읽었으면 null) — 1:1이라 이 방식으로 충분
-    @Column(name = "read_at")
-    private LocalDateTime readAt;
 
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
@@ -55,11 +52,5 @@ public class ChatMessage {
     @PrePersist
     protected void onCreate() {
         this.createdAt = LocalDateTime.now();
-    }
-
-    public void markAsRead() {
-        if (this.readAt == null) {
-            this.readAt = LocalDateTime.now();
-        }
     }
 }

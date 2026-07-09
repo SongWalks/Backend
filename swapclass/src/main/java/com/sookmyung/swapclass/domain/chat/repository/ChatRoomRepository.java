@@ -10,12 +10,13 @@ import java.util.Optional;
 
 public interface ChatRoomRepository extends JpaRepository<ChatRoom, Long> {
 
-    // 중복 방 생성 방지 (같은 게시글 + 같은 요청자)
-    Optional<ChatRoom> findByPostIdAndRequesterId(Long postId, Long requesterId);
+    // exchange와 1:1 — 중복 방 방지 / 교환으로 방 찾기
+    Optional<ChatRoom> findByExchangeId(Long exchangeId);
 
-    // 내가 참여 중인 방 목록 (작성자이거나 요청자이거나)
+    // 내가 참여한 방 목록 (교환의 두 게시글 작성자 중 하나가 나)
     @Query("SELECT r FROM ChatRoom r " +
-           "WHERE r.post.user.id = :userId OR r.requester.id = :userId " +
+           "WHERE r.exchange.postA.user.id = :userId " +
+           "   OR r.exchange.postB.user.id = :userId " +
            "ORDER BY r.id DESC")
     List<ChatRoom> findMyRooms(@Param("userId") Long userId);
 }
