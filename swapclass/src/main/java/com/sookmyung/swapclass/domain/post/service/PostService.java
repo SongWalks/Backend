@@ -3,6 +3,7 @@ package com.sookmyung.swapclass.domain.post.service;
 import com.sookmyung.swapclass.domain.course.entity.Course;
 import com.sookmyung.swapclass.domain.course.repository.CourseRepository;
 import com.sookmyung.swapclass.domain.post.dto.request.PostCreateRequest;
+import com.sookmyung.swapclass.domain.post.dto.request.PostUpdateRequest;
 import com.sookmyung.swapclass.domain.post.dto.response.PostCreateResponse;
 import com.sookmyung.swapclass.domain.post.dto.response.PostDetailResponse;
 import com.sookmyung.swapclass.domain.post.entity.Post;
@@ -17,6 +18,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -78,6 +80,84 @@ public class PostService {
         }
 
         return PostDetailResponse.of(post, currentUserId);
+    }
+
+    // 게시글 수정 (원하는 과목 1~3순위 + kakaoLink만. 버릴 과목은 불변)
+    @Transactional
+    public void updatePost(Long userId, Long postId, PostUpdateRequest request) {
+        Post post = findModifiablePost(postId, userId);
+
+        Long discardCourseId = post.getDiscardCourse().getId();
+
+        // 버릴 과목 변경 시도 거부 (요청에 담겨 왔고 현재 값과 다르면)
+        if (request.discardCourseId() != null
+                && !request.discardCourseId().equals(discardCourseId)) {
+            throw new CustomException(ErrorCode.DISCARD_COURSE_NOT_MODIFIABLE);
+        }
+
+        // 원하는 과목 검증 (기존 버릴 과목 기준)
+        validateWantedCourses(discardCourseId, request.wantedCourseIds());
+
+        // 원하는 과목 전체 교체
+        // uk_post_priority(post_id, priority) 위반 방지: 기존 행 DELETE를 먼저 flush 한 뒤 재삽입
+        post.replaceWantedCourses(new ArrayList<>()); // 기존 것 orphan 제거
+        postRepository.flush();                        // DELETE를 INSERT보다 먼저 실행
+        for (PostWantedCourse wanted : buildWantedCourses(request.wantedCourseIds())) {
+            post.addWantedCourse(wanted);
+        }
+
+        // 오픈채팅 링크 수정 (null 이면 링크 제거)
+        post.updateKakaoLink(request.kakaoLink());
+    }
+
+    // 게시글 삭제 (매칭 전일 때만, soft delete)
+    @Transactional
+    public void deletePost(Long userId, Long postId) {
+        Post post = postRepository.findById(postId)
+                .orElseThrow(() -> new CustomException(ErrorCode.POST_NOT_FOUND));
+
+        if (post.getStatus() == PostStatus.DELETED) {
+            throw new CustomException(ErrorCode.POST_NOT_FOUND);
+        }
+        if (!post.isOwnedBy(userId)) {
+            throw new CustomException(ErrorCode.FORBIDDEN);
+        }
+        // 교환 중·완료 상태면 삭제 불가 (거래 파기 프로세스 별도)
+        if (!post.isMatchable()) {
+            throw new CustomException(ErrorCode.POST_NOT_DELETABLE);
+        }
+
+        post.softDelete();
+    }
+
+    // 수정 가능한 내 게시글 조회 (없음/삭제 → 404, 남의 글 → 403, 매칭 전 아님 → 400)
+    private Post findModifiablePost(Long postId, Long userId) {
+        Post post = postRepository.findById(postId)
+                .orElseThrow(() -> new CustomException(ErrorCode.POST_NOT_FOUND));
+
+        if (post.getStatus() == PostStatus.DELETED) {
+            throw new CustomException(ErrorCode.POST_NOT_FOUND);
+        }
+        if (!post.isOwnedBy(userId)) {
+            throw new CustomException(ErrorCode.FORBIDDEN);
+        }
+        if (!post.isMatchable()) {
+            throw new CustomException(ErrorCode.POST_NOT_MODIFIABLE);
+        }
+        return post;
+    }
+
+    // courseId 리스트 → priority(1부터) 부여한 PostWantedCourse 리스트
+    private List<PostWantedCourse> buildWantedCourses(List<Long> wantedCourseIds) {
+        List<PostWantedCourse> result = new ArrayList<>();
+        for (int i = 0; i < wantedCourseIds.size(); i++) {
+            Course course = findCourse(wantedCourseIds.get(i));
+            result.add(PostWantedCourse.builder()
+                    .course(course)
+                    .priority(i + 1)
+                    .build());
+        }
+        return result;
     }
 
     // 원하는 과목 자체 중복 금지 + 버릴 과목을 원하는 과목으로 등록 금지

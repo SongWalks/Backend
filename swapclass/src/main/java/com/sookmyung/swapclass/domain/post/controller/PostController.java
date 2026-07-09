@@ -1,6 +1,7 @@
 package com.sookmyung.swapclass.domain.post.controller;
 
 import com.sookmyung.swapclass.domain.post.dto.request.PostCreateRequest;
+import com.sookmyung.swapclass.domain.post.dto.request.PostUpdateRequest;
 import com.sookmyung.swapclass.domain.post.dto.response.PostCreateResponse;
 import com.sookmyung.swapclass.domain.post.dto.response.PostDetailResponse;
 import com.sookmyung.swapclass.domain.post.service.PostService;
@@ -36,5 +37,26 @@ public class PostController {
             @PathVariable Long postId
     ) {
         return ApiResponse.success(postService.getPost(postId, userId));
+    }
+
+    // 게시글 수정 (원하는 과목·오픈채팅 링크)
+    @PatchMapping("/{postId}")
+    public ApiResponse<Void> updatePost(
+            @AuthenticationPrincipal Long userId,
+            @PathVariable Long postId,
+            @Valid @RequestBody PostUpdateRequest request
+    ) {
+        postService.updatePost(userId, postId, request);
+        return ApiResponse.success(null, "게시글이 수정되었습니다.");
+    }
+
+    // 게시글 삭제 (soft delete)
+    @DeleteMapping("/{postId}")
+    public ApiResponse<Void> deletePost(
+            @AuthenticationPrincipal Long userId,
+            @PathVariable Long postId
+    ) {
+        postService.deletePost(userId, postId);
+        return ApiResponse.success(null, "게시글이 삭제되었습니다.");
     }
 }
