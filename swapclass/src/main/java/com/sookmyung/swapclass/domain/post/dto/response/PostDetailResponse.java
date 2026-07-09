@@ -41,14 +41,4 @@ public record PostDetailResponse(
                 post.isOwnedBy(currentUserId)
         );
     }
-
-    // 원하는 과목 한 건: 우선순위 + 강의 요약
-    public record WantedCourseResponse(int priority, CourseSummaryResponse course) {
-        public static WantedCourseResponse from(PostWantedCourse wantedCourse) {
-            return new WantedCourseResponse(
-                    wantedCourse.getPriority(),
-                    CourseSummaryResponse.from(wantedCourse.getCourse())
-            );
-        }
-    }
 }

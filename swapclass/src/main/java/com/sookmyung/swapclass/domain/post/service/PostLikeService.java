@@ -1,5 +1,6 @@
 package com.sookmyung.swapclass.domain.post.service;
 
+import com.sookmyung.swapclass.domain.post.dto.response.PostLikeItemResponse;
 import com.sookmyung.swapclass.domain.post.dto.response.PostLikeResponse;
 import com.sookmyung.swapclass.domain.post.entity.Post;
 import com.sookmyung.swapclass.domain.post.entity.PostLike;
@@ -13,6 +14,8 @@ import com.sookmyung.swapclass.global.exception.ErrorCode;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.util.List;
 
 @Service
 @RequiredArgsConstructor
@@ -44,6 +47,13 @@ public class PostLikeService {
         postLikeRepository.findByUserIdAndPostId(userId, postId)
                 .ifPresent(postLikeRepository::delete);
         return new PostLikeResponse(postId, false);
+    }
+
+    // 내 찜 목록 (최신순). 거래완료·삭제 글도 포함 → 카드의 blinded 플래그로 구분
+    public List<PostLikeItemResponse> getMyLikes(Long userId) {
+        return postLikeRepository.findByUserIdOrderByCreatedAtDesc(userId).stream()
+                .map(PostLikeItemResponse::from)
+                .toList();
     }
 
     // 삭제된 글은 찜 대상에서 제외
