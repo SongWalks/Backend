@@ -52,7 +52,6 @@ public class SecurityConfig {
                         ).permitAll()
                         // 그 외(로그아웃 포함)는 인증 필요
                         .anyRequest().authenticated()
-                        .anyRequest().permitAll()
                 )
                 // 기본 로그인 방식 끔(우리는 JWT 사용)
                 .httpBasic(httpBasic -> httpBasic.disable())
