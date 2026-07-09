@@ -36,7 +36,7 @@ public class Post {
     @Column(nullable = false)
     private PostStatus status;
 
-    // 오픈채팅 링크 (선택)
+    // 오픈채팅 링크 (선택) 나중에 삭제해도 됨!
     @Column(name = "kakao_link")
     private String kakaoLink;
 

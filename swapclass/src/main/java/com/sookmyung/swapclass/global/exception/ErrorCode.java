@@ -25,6 +25,11 @@ public enum ErrorCode {
     // 게시글
     POST_NOT_FOUND(404, "존재하지 않는 게시글입니다."),
     POST_NOT_MODIFIABLE(400, "수정할 수 없는 게시글입니다."),
+    WANTED_COURSE_DUPLICATED(400, "원하는 과목이 중복되었습니다."),
+    DISCARD_COURSE_CANNOT_BE_WANTED(400, "버릴 과목은 원하는 과목으로 등록할 수 없습니다."),
+
+    // 강의
+    COURSE_NOT_FOUND(404, "존재하지 않는 강의입니다."),
 
     // 교환 요청
     PROPOSAL_ALREADY_EXISTS(409, "이미 교환 요청을 보낸 게시글입니다."),
