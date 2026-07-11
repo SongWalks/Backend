@@ -68,3 +68,18 @@ CREATE TABLE user_blocks (
                              FOREIGN KEY (blocker_id) REFERENCES users(id),
                              FOREIGN KEY (blocked_id) REFERENCES users(id)
 );
+
+-- ===== verification_logs =====
+CREATE TABLE verification_logs (
+                                   id BIGINT NOT NULL AUTO_INCREMENT,
+                                   exchange_id BIGINT NOT NULL,
+                                   user_id BIGINT NOT NULL,
+                                   verify_type VARCHAR(10) NOT NULL,
+                                   image_url VARCHAR(500) NOT NULL,
+                                   qr_valid TINYINT(1),
+                                   verified_at DATETIME,
+                                   status VARCHAR(20) NOT NULL DEFAULT 'PENDING',
+                                   created_at DATETIME NOT NULL,
+                                   PRIMARY KEY (id),
+                                   FOREIGN KEY (user_id) REFERENCES users(id)
+);
