@@ -83,3 +83,14 @@ CREATE TABLE verification_logs (
                                    PRIMARY KEY (id),
                                    FOREIGN KEY (user_id) REFERENCES users(id)
 );
+
+-- ===== push_subscriptions =====
+CREATE TABLE push_subscriptions (
+                                    id BIGINT NOT NULL AUTO_INCREMENT,
+                                    user_id BIGINT NOT NULL,
+                                    fcm_token VARCHAR(500) NOT NULL,
+                                    device_type VARCHAR(20),
+                                    created_at DATETIME NOT NULL,
+                                    PRIMARY KEY (id),
+                                    FOREIGN KEY (user_id) REFERENCES users(id)
+);
