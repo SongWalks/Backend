@@ -94,3 +94,4 @@ CREATE TABLE push_subscriptions (
                                     PRIMARY KEY (id),
                                     FOREIGN KEY (user_id) REFERENCES users(id)
 );
+
