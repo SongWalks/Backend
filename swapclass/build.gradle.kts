@@ -37,6 +37,10 @@ dependencies {
 	// Swagger (springdoc-openapi, Spring Boot 3.x) - API 문서 자동 생성
 	implementation("org.springdoc:springdoc-openapi-starter-webmvc-ui:2.8.17")
 
+	//QR
+	implementation("com.google.zxing:core:3.5.3")
+	implementation("com.google.zxing:javase:3.5.3")
+
 	compileOnly("org.projectlombok:lombok")
 	runtimeOnly("com.mysql:mysql-connector-j")
 	annotationProcessor("org.projectlombok:lombok")
