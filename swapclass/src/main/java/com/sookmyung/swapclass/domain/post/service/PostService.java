@@ -5,6 +5,7 @@ import com.sookmyung.swapclass.domain.course.repository.CourseRepository;
 import com.sookmyung.swapclass.domain.post.dto.request.PostCreateRequest;
 import com.sookmyung.swapclass.domain.post.dto.request.PostUpdateRequest;
 import com.sookmyung.swapclass.domain.post.dto.response.PostCreateResponse;
+import com.sookmyung.swapclass.domain.post.dto.response.MyPostResponse;
 import com.sookmyung.swapclass.domain.post.dto.response.PostDetailResponse;
 import com.sookmyung.swapclass.domain.post.dto.response.PostFeedResponse;
 import com.sookmyung.swapclass.domain.post.entity.Post;
@@ -94,6 +95,21 @@ public class PostService {
                 .findFeed(PostStatus.MATCHABLE, userId, dept, pageable)
                 .map(PostFeedResponse::from);
         return PageResponse.from(feed);
+    }
+
+    // 내 교환 게시글 목록 (status 지정 시 해당 상태만, 없으면 전체 - 삭제 제외)
+    public List<MyPostResponse> getMyPosts(Long userId, PostStatus status) {
+        if (status == PostStatus.DELETED) {
+            throw new CustomException(ErrorCode.INVALID_INPUT); // 삭제 글은 조회 대상 아님
+        }
+
+        List<Post> posts = (status == null)
+                ? postRepository.findByUserIdAndStatusNotOrderByCreatedAtDesc(userId, PostStatus.DELETED)
+                : postRepository.findByUserIdAndStatusOrderByCreatedAtDesc(userId, status);
+
+        return posts.stream()
+                .map(MyPostResponse::from)
+                .toList();
     }
 
     // 게시글 수정 (원하는 과목 1~3순위 + kakaoLink만. 버릴 과목은 불변)

@@ -2,12 +2,16 @@ package com.sookmyung.swapclass.domain.post.controller;
 
 import com.sookmyung.swapclass.domain.post.dto.request.PostCreateRequest;
 import com.sookmyung.swapclass.domain.post.dto.request.PostUpdateRequest;
+import com.sookmyung.swapclass.domain.post.dto.response.MyPostResponse;
 import com.sookmyung.swapclass.domain.post.dto.response.PostCreateResponse;
 import com.sookmyung.swapclass.domain.post.dto.response.PostDetailResponse;
 import com.sookmyung.swapclass.domain.post.dto.response.PostFeedResponse;
+import com.sookmyung.swapclass.domain.post.entity.PostStatus;
 import com.sookmyung.swapclass.domain.post.service.PostService;
 import com.sookmyung.swapclass.global.response.ApiResponse;
 import com.sookmyung.swapclass.global.response.PageResponse;
+
+import java.util.List;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -41,6 +45,15 @@ public class PostController {
             @RequestParam(defaultValue = "20") int size
     ) {
         return ApiResponse.success(postService.getFeed(userId, dept, page, size));
+    }
+
+    // 내 교환 게시글 목록 (status 선택: MATCHABLE / IN_EXCHANGE / COMPLETED, 없으면 전체)
+    @GetMapping("/me")
+    public ApiResponse<List<MyPostResponse>> getMyPosts(
+            @AuthenticationPrincipal Long userId,
+            @RequestParam(required = false) PostStatus status
+    ) {
+        return ApiResponse.success(postService.getMyPosts(userId, status));
     }
 
     // 게시글 상세 조회
