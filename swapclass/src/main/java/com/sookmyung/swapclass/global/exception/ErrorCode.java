@@ -36,7 +36,12 @@ public enum ErrorCode {
     EXCHANGE_ALREADY_COMPLETED(400, "이미 완료된 교환입니다."),
 
     // 신고
-    REPORT_IMAGE_REQUIRED(400, "신고 사진을 첨부해주세요.");
+    REPORT_IMAGE_REQUIRED(400, "신고 사진을 첨부해주세요."),
+
+    //라운지
+    LOUNGE_POST_NOT_FOUND(404, "존재하지 않는 라운지 게시글입니다."),
+    LOUNGE_COMMENT_NOT_FOUND(404, "존재하지 않는 댓글입니다."),
+    LOUNGE_NOT_AUTHOR(403, "본인이 작성한 글만 수정하거나 삭제할 수 있습니다.");
 
     private final int status;
     private final String message;
