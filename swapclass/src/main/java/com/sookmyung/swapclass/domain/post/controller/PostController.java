@@ -47,6 +47,22 @@ public class PostController {
         return ApiResponse.success(postService.getFeed(userId, dept, page, size));
     }
 
+    // [퀵필터] 내 버릴 과목을 원하는(want) 타 유저 글 보기
+    @GetMapping("/my-seekers")
+    public ApiResponse<List<MyPostResponse>> getMySeekers(
+            @AuthenticationPrincipal Long userId
+    ) {
+        return ApiResponse.success(postService.getMySeekers(userId));
+    }
+
+    // [퀵필터] 내가 원하는(want) 과목을 버리는(give) 타 유저 글 보기
+    @GetMapping("/my-targets")
+    public ApiResponse<List<MyPostResponse>> getMyTargets(
+            @AuthenticationPrincipal Long userId
+    ) {
+        return ApiResponse.success(postService.getMyTargets(userId));
+    }
+
     // 내 교환 게시글 목록 (status 선택: MATCHABLE / IN_EXCHANGE / COMPLETED, 없으면 전체)
     @GetMapping("/me")
     public ApiResponse<List<MyPostResponse>> getMyPosts(

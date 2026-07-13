@@ -12,6 +12,7 @@ import com.sookmyung.swapclass.domain.post.entity.Post;
 import com.sookmyung.swapclass.domain.post.entity.PostStatus;
 import com.sookmyung.swapclass.domain.post.entity.PostWantedCourse;
 import com.sookmyung.swapclass.domain.post.repository.PostRepository;
+import com.sookmyung.swapclass.domain.post.repository.PostWantedCourseRepository;
 import com.sookmyung.swapclass.domain.user.entity.User;
 import com.sookmyung.swapclass.domain.user.repository.UserRepository;
 import com.sookmyung.swapclass.global.exception.CustomException;
@@ -35,6 +36,7 @@ import java.util.Set;
 public class PostService {
 
     private final PostRepository postRepository;
+    private final PostWantedCourseRepository postWantedCourseRepository;
     private final CourseRepository courseRepository;
     private final UserRepository userRepository;
 
@@ -108,6 +110,32 @@ public class PostService {
                 : postRepository.findByUserIdAndStatusOrderByCreatedAtDesc(userId, status);
 
         return posts.stream()
+                .map(MyPostResponse::from)
+                .toList();
+    }
+
+    // [퀵필터] 내 버릴 과목을 want 로 찾는 타 유저 글 (my-seekers)
+    public List<MyPostResponse> getMySeekers(Long userId) {
+        // 내가 올린 '버릴 과목' id 목록 (매칭 전 글 기준)
+        List<Long> giveCourseIds = postRepository.findMyGiveCourseIds(userId, PostStatus.MATCHABLE);
+        if (giveCourseIds.isEmpty()) {
+            throw new CustomException(ErrorCode.POST_NOT_REGISTERED);
+        }
+
+        return postRepository.findMySeekers(PostStatus.MATCHABLE, userId, giveCourseIds).stream()
+                .map(MyPostResponse::from)
+                .toList();
+    }
+
+    // [퀵필터] 내가 원하는(want) 과목을 give 로 올린 타 유저 글 (my-targets)
+    public List<MyPostResponse> getMyTargets(Long userId) {
+        // 내가 want(1~3순위)로 등록한 과목 id 목록 (매칭 전 글 기준)
+        List<Long> wantCourseIds = postWantedCourseRepository.findMyWantCourseIds(userId, PostStatus.MATCHABLE);
+        if (wantCourseIds.isEmpty()) {
+            throw new CustomException(ErrorCode.POST_NOT_REGISTERED);
+        }
+
+        return postRepository.findMyTargets(PostStatus.MATCHABLE, userId, wantCourseIds).stream()
                 .map(MyPostResponse::from)
                 .toList();
     }
