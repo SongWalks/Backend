@@ -4,8 +4,10 @@ import com.sookmyung.swapclass.domain.post.dto.request.PostCreateRequest;
 import com.sookmyung.swapclass.domain.post.dto.request.PostUpdateRequest;
 import com.sookmyung.swapclass.domain.post.dto.response.PostCreateResponse;
 import com.sookmyung.swapclass.domain.post.dto.response.PostDetailResponse;
+import com.sookmyung.swapclass.domain.post.dto.response.PostFeedResponse;
 import com.sookmyung.swapclass.domain.post.service.PostService;
 import com.sookmyung.swapclass.global.response.ApiResponse;
+import com.sookmyung.swapclass.global.response.PageResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -28,6 +30,17 @@ public class PostController {
     ) {
         PostCreateResponse response = postService.createPost(userId, request);
         return ApiResponse.success(response, "게시글이 등록되었습니다.");
+    }
+
+    // 게시글 피드 조회 (매칭 전, 최신순, 오프셋 페이징. 학과 필터 선택)
+    @GetMapping
+    public ApiResponse<PageResponse<PostFeedResponse>> getFeed(
+            @AuthenticationPrincipal Long userId,
+            @RequestParam(required = false) String dept,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "20") int size
+    ) {
+        return ApiResponse.success(postService.getFeed(userId, dept, page, size));
     }
 
     // 게시글 상세 조회

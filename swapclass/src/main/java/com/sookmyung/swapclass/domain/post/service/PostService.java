@@ -6,6 +6,7 @@ import com.sookmyung.swapclass.domain.post.dto.request.PostCreateRequest;
 import com.sookmyung.swapclass.domain.post.dto.request.PostUpdateRequest;
 import com.sookmyung.swapclass.domain.post.dto.response.PostCreateResponse;
 import com.sookmyung.swapclass.domain.post.dto.response.PostDetailResponse;
+import com.sookmyung.swapclass.domain.post.dto.response.PostFeedResponse;
 import com.sookmyung.swapclass.domain.post.entity.Post;
 import com.sookmyung.swapclass.domain.post.entity.PostStatus;
 import com.sookmyung.swapclass.domain.post.entity.PostWantedCourse;
@@ -14,7 +15,11 @@ import com.sookmyung.swapclass.domain.user.entity.User;
 import com.sookmyung.swapclass.domain.user.repository.UserRepository;
 import com.sookmyung.swapclass.global.exception.CustomException;
 import com.sookmyung.swapclass.global.exception.ErrorCode;
+import com.sookmyung.swapclass.global.response.PageResponse;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -80,6 +85,15 @@ public class PostService {
         }
 
         return PostDetailResponse.of(post, currentUserId);
+    }
+
+    // 게시글 피드 (매칭 전, 본인 글 제외, 학과 필터(선택), 최신순, 오프셋 페이징)
+    public PageResponse<PostFeedResponse> getFeed(Long userId, String dept, int page, int size) {
+        Pageable pageable = PageRequest.of(page, size);
+        Page<PostFeedResponse> feed = postRepository
+                .findFeed(PostStatus.MATCHABLE, userId, dept, pageable)
+                .map(PostFeedResponse::from);
+        return PageResponse.from(feed);
     }
 
     // 게시글 수정 (원하는 과목 1~3순위 + kakaoLink만. 버릴 과목은 불변)
