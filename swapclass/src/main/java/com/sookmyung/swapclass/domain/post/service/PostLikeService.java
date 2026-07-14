@@ -14,6 +14,7 @@ import com.sookmyung.swapclass.global.exception.ErrorCode;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import com.sookmyung.swapclass.domain.notification.service.NotificationService;
 
 import java.util.List;
 
@@ -25,6 +26,7 @@ public class PostLikeService {
     private final PostLikeRepository postLikeRepository;
     private final PostRepository postRepository;
     private final UserRepository userRepository;
+    private final NotificationService notificationService;
 
     // 찜하기 (멱등: 이미 찜했으면 아무 일 없이 liked=true 반환)
     @Transactional
@@ -37,6 +39,16 @@ public class PostLikeService {
             postLikeRepository.save(
                     PostLike.builder().user(user).post(post).build()
             );
+
+            // 찜 알림 발송 (본인 게시글 제외)
+            if (!post.getUser().getId().equals(userId)
+                    && post.getStatus() == PostStatus.MATCHABLE) {
+                notificationService.sendLikeNotification(
+                        post.getUser(),
+                        post.getDiscardCourse().getName(),
+                        userId
+                );
+            }
         }
         return new PostLikeResponse(postId, true);
     }

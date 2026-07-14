@@ -2,6 +2,7 @@ package com.sookmyung.swapclass.domain.post.repository;
 
 import com.sookmyung.swapclass.domain.post.entity.Post;
 import com.sookmyung.swapclass.domain.post.entity.PostStatus;
+import com.sookmyung.swapclass.domain.block.entity.UserBlock;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -13,15 +14,20 @@ import java.util.List;
 
 public interface PostRepository extends JpaRepository<Post, Long> {
 
-    // [피드] 특정 상태(MATCHABLE) · 본인 글 제외 · 학과 필터(선택) · 최신순 페이징
-    // NOTE: 차단(blocks) 유저 양방향 제외는 blocks 도메인 확정 후 조건 추가 예정
+    // [피드] 특정 상태(MATCHABLE) · 본인 글 제외 · 차단 유저 양방향 제외 · 학과 필터(선택) · 최신순 페이징
     @Query("""
-            select p from Post p
-            where p.status = :status
-              and p.user.id <> :userId
-              and (:dept is null or p.discardCourse.department = :dept)
-            order by p.createdAt desc
-            """)
+        select p from Post p
+        where p.status = :status
+          and p.user.id <> :userId
+          and p.user.id not in (
+              select b.blocked.id from UserBlock b where b.blocker.id = :userId
+          )
+          and p.user.id not in (
+              select b.blocker.id from UserBlock b where b.blocked.id = :userId
+          )
+          and (:dept is null or p.discardCourse.department = :dept)
+        order by p.createdAt desc
+        """)
     Page<Post> findFeed(@Param("status") PostStatus status,
                         @Param("userId") Long userId,
                         @Param("dept") String dept,
@@ -62,3 +68,4 @@ public interface PostRepository extends JpaRepository<Post, Long> {
     @Query("select p.discardCourse.id from Post p where p.user.id = :userId and p.status = :status")
     List<Long> findMyGiveCourseIds(@Param("userId") Long userId, @Param("status") PostStatus status);
 }
+
