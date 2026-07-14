@@ -43,3 +43,7 @@ application-local.yml
 
 .idea/
 swapclass/src/main/resources/firebase-service-account.json
+src/main/resources/firebase-service-account.json
+main/resources/firebase-service-account.json
+/esources/firebase-service-account.json
+firebase-service-account.json
