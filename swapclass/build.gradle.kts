@@ -40,6 +40,7 @@ dependencies {
 	//QR
 	implementation("com.google.zxing:core:3.5.3")
 	implementation("com.google.zxing:javase:3.5.3")
+	implementation("com.google.firebase:firebase-admin:9.2.0")
 
 	compileOnly("org.projectlombok:lombok")
 	runtimeOnly("com.mysql:mysql-connector-j")

@@ -19,6 +19,7 @@ bin/
 
 ### IntelliJ IDEA ###
 .idea
+.idea/
 *.iws
 *.iml
 *.ipr
@@ -40,3 +41,5 @@ application-local.yml
 
 
 
+.idea/
+swapclass/src/main/resources/firebase-service-account.json
