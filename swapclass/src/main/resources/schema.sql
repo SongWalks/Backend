@@ -94,3 +94,63 @@ CREATE TABLE push_subscriptions (
                                     PRIMARY KEY (id),
                                     FOREIGN KEY (user_id) REFERENCES users(id)
 );
+
+
+-- 라운지 게시글
+CREATE TABLE IF NOT EXISTS lounge_posts (
+                                            id            BIGINT       NOT NULL AUTO_INCREMENT,
+                                            user_id       BIGINT       NOT NULL,
+                                            course_id     BIGINT       NOT NULL,
+                                            type          VARCHAR(255) NOT NULL,          -- TIP / CLOSURE
+    title         VARCHAR(255) NOT NULL,
+    content       TEXT         NOT NULL,
+    like_count    INT          NOT NULL DEFAULT 0,
+    comment_count INT          NOT NULL DEFAULT 0,
+    created_at    DATETIME     NOT NULL,
+    updated_at    DATETIME     NULL,
+    PRIMARY KEY (id),
+    CONSTRAINT fk_lounge_post_user   FOREIGN KEY (user_id)   REFERENCES users (id),
+    CONSTRAINT fk_lounge_post_course FOREIGN KEY (course_id) REFERENCES courses (id),
+    INDEX idx_lounge_post_course  (course_id),
+    INDEX idx_lounge_post_type    (type),
+    INDEX idx_lounge_post_created (created_at),
+    INDEX idx_lounge_post_user    (user_id)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- 라운지 댓글
+CREATE TABLE IF NOT EXISTS lounge_comments (
+                                               id         BIGINT   NOT NULL AUTO_INCREMENT,
+                                               post_id    BIGINT   NOT NULL,
+                                               user_id    BIGINT   NOT NULL,
+                                               content    TEXT     NOT NULL,
+                                               created_at DATETIME NOT NULL,
+                                               PRIMARY KEY (id),
+    CONSTRAINT fk_lounge_comment_post FOREIGN KEY (post_id) REFERENCES lounge_posts (id),
+    CONSTRAINT fk_lounge_comment_user FOREIGN KEY (user_id) REFERENCES users (id),
+    INDEX idx_lounge_comment_post (post_id)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- 라운지 좋아요
+CREATE TABLE IF NOT EXISTS lounge_likes (
+                                            id         BIGINT   NOT NULL AUTO_INCREMENT,
+                                            post_id    BIGINT   NOT NULL,
+                                            user_id    BIGINT   NOT NULL,
+                                            created_at DATETIME NOT NULL,
+                                            PRIMARY KEY (id),
+    CONSTRAINT fk_lounge_like_post FOREIGN KEY (post_id) REFERENCES lounge_posts (id),
+    CONSTRAINT fk_lounge_like_user FOREIGN KEY (user_id) REFERENCES users (id),
+    CONSTRAINT uk_lounge_like_post_user UNIQUE (post_id, user_id)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- 라운지 북마크
+CREATE TABLE IF NOT EXISTS lounge_bookmarks (
+                                                id         BIGINT   NOT NULL AUTO_INCREMENT,
+                                                post_id    BIGINT   NOT NULL,
+                                                user_id    BIGINT   NOT NULL,
+                                                created_at DATETIME NOT NULL,
+                                                PRIMARY KEY (id),
+    CONSTRAINT fk_lounge_bookmark_post FOREIGN KEY (post_id) REFERENCES lounge_posts (id),
+    CONSTRAINT fk_lounge_bookmark_user FOREIGN KEY (user_id) REFERENCES users (id),
+    CONSTRAINT uk_lounge_bookmark_post_user UNIQUE (post_id, user_id),
+    INDEX idx_lounge_bookmark_user_created (user_id, created_at)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
