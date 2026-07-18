@@ -1,0 +1,24 @@
+package com.sookmyung.swapclass.domain.user.controller;
+
+import com.sookmyung.swapclass.domain.user.dto.response.MyInfoResponse;
+import com.sookmyung.swapclass.domain.user.service.MyPageService;
+import com.sookmyung.swapclass.global.response.ApiResponse;
+import lombok.RequiredArgsConstructor;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+
+@RestController
+@RequiredArgsConstructor
+@RequestMapping("/api/users/me")   // 마이페이지 계정 관리 공통 경로
+public class MyPageController {
+
+    private final MyPageService myPageService;
+
+    // [내 정보 조회] JWT 필터가 세팅한 userId를 꺼내 사용
+    @GetMapping
+    public ApiResponse<MyInfoResponse> getMyInfo(@AuthenticationPrincipal Long userId) {
+        return ApiResponse.success(myPageService.getMyInfo(userId));
+    }
+}
