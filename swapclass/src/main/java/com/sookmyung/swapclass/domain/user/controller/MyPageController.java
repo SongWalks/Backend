@@ -1,6 +1,7 @@
 package com.sookmyung.swapclass.domain.user.controller;
 
 import com.sookmyung.swapclass.domain.user.dto.request.NotificationToggleRequest;
+import com.sookmyung.swapclass.domain.user.dto.request.PasswordChangeRequest;
 import com.sookmyung.swapclass.domain.user.dto.response.MyInfoResponse;
 import com.sookmyung.swapclass.domain.user.dto.response.NotificationSettingResponse;
 import com.sookmyung.swapclass.domain.user.service.MyPageService;
@@ -34,5 +35,14 @@ public class MyPageController {
             @Valid @RequestBody NotificationToggleRequest request) {
         return ApiResponse.success(
                 myPageService.updateNotification(userId, request.notificationEnabled()));
+    }
+
+    // [비밀번호 변경] 현재 비밀번호 확인 후 변경
+    @PatchMapping("/password")
+    public ApiResponse<Void> changePassword(
+            @AuthenticationPrincipal Long userId,
+            @Valid @RequestBody PasswordChangeRequest request) {
+        myPageService.changePassword(userId, request);
+        return ApiResponse.success(null, "비밀번호가 변경되었습니다.");
     }
 }
