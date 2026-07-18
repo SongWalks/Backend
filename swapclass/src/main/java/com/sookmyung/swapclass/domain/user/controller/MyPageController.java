@@ -9,6 +9,7 @@ import com.sookmyung.swapclass.global.response.ApiResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -44,5 +45,12 @@ public class MyPageController {
             @Valid @RequestBody PasswordChangeRequest request) {
         myPageService.changePassword(userId, request);
         return ApiResponse.success(null, "비밀번호가 변경되었습니다.");
+    }
+
+    // [회원 탈퇴] 진행 중 거래 없을 때만 탈퇴 처리
+    @DeleteMapping
+    public ApiResponse<Void> withdraw(@AuthenticationPrincipal Long userId) {
+        myPageService.withdraw(userId);
+        return ApiResponse.success(null, "회원 탈퇴가 완료되었습니다.");
     }
 }

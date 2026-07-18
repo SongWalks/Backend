@@ -42,6 +42,7 @@ public enum ErrorCode {
     // 교환
     EXCHANGE_NOT_FOUND(404, "존재하지 않는 교환입니다."),
     EXCHANGE_ALREADY_COMPLETED(400, "이미 완료된 교환입니다."),
+    EXCHANGE_IN_PROGRESS(400, "진행 중인 교환을 완료하거나 취소한 후 탈퇴할 수 있습니다."),
 
     // 신고
     REPORT_IMAGE_REQUIRED(400, "신고 사진을 첨부해주세요."),
