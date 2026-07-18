@@ -42,6 +42,10 @@ public class User {
     @Column(name = "suspended_until")
     private LocalDateTime suspendedUntil;
 
+    //알림 수신 설정 (교환 제안 등 알림 수신 여부)
+    @Column(name = "notification_enabled", nullable = false)
+    private boolean notificationEnabled;
+
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
 
@@ -52,6 +56,7 @@ public class User {
         this.penaltyCount = 0;
         this.mannerWarningCount = 0;
         this.status = UserStatus.ACTIVE;
+        this.notificationEnabled = true;
     }
 
     @PrePersist
@@ -61,6 +66,14 @@ public class User {
 
     public void updateNickname(String nickname) {
         this.nickname = nickname;
+    }
+
+    public void updateNotificationEnabled(boolean notificationEnabled) {
+        this.notificationEnabled = notificationEnabled;
+    }
+
+    public void updatePassword(String encodedPassword) {
+        this.password = encodedPassword;
     }
 
     public void suspend(LocalDateTime until) {

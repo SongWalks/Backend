@@ -8,6 +8,7 @@ CREATE TABLE users (
     manner_warning_count INT NOT NULL DEFAULT 0,
     status VARCHAR(20) NOT NULL DEFAULT 'ACTIVE',
     suspended_until DATETIME,
+    notification_enabled BOOLEAN NOT NULL DEFAULT TRUE,
     created_at DATETIME NOT NULL,
     PRIMARY KEY (id),
     UNIQUE KEY uq_users_email (email)
@@ -190,3 +191,66 @@ CREATE TABLE IF NOT EXISTS lounge_bookmarks (
     CONSTRAINT uk_lounge_bookmark_post_user UNIQUE (post_id, user_id),
     INDEX idx_lounge_bookmark_user_created (user_id, created_at)
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- ===== proposals (교환 요청, 30분 만료) =====
+CREATE TABLE proposals (
+    id BIGINT NOT NULL AUTO_INCREMENT,
+    sender_user_id BIGINT NOT NULL,
+    receiver_user_id BIGINT NOT NULL,
+    sender_post_id BIGINT NOT NULL,
+    receiver_post_id BIGINT NOT NULL,
+    status VARCHAR(20) NOT NULL,          -- PENDING / ACCEPTED / REJECTED / WITHDRAWN / EXPIRED
+    expires_at DATETIME NOT NULL,
+    created_at DATETIME NOT NULL,
+    PRIMARY KEY (id),
+    FOREIGN KEY (sender_user_id) REFERENCES users(id),
+    FOREIGN KEY (receiver_user_id) REFERENCES users(id),
+    FOREIGN KEY (sender_post_id) REFERENCES posts(id),
+    FOREIGN KEY (receiver_post_id) REFERENCES posts(id)
+);
+
+-- ===== exchanges (성사된 교환, 72h 자동완료) =====
+CREATE TABLE exchanges (
+    id BIGINT NOT NULL AUTO_INCREMENT,
+    proposal_id BIGINT NOT NULL,
+    post_a_id BIGINT NOT NULL,
+    post_b_id BIGINT NOT NULL,
+    scheduled_at DATETIME,
+    auto_confirm_at DATETIME,
+    status VARCHAR(20) NOT NULL,          -- IN_PROGRESS / COMPLETED / CANCELED / DISPUTE
+    result_a BOOLEAN NOT NULL DEFAULT FALSE,
+    result_b BOOLEAN NOT NULL DEFAULT FALSE,
+    cancel_reason VARCHAR(255),
+    created_at DATETIME NOT NULL,
+    completed_at DATETIME,
+    PRIMARY KEY (id),
+    UNIQUE KEY uq_exchanges_proposal (proposal_id),
+    FOREIGN KEY (proposal_id) REFERENCES proposals(id),
+    FOREIGN KEY (post_a_id) REFERENCES posts(id),
+    FOREIGN KEY (post_b_id) REFERENCES posts(id)
+);
+
+-- ===== chat_rooms (교환과 1:1) =====
+CREATE TABLE chat_rooms (
+    id BIGINT NOT NULL AUTO_INCREMENT,
+    exchange_id BIGINT NOT NULL,
+    status VARCHAR(20) NOT NULL,          -- CHATTING / SCHEDULED / VERIFYING / COUNTDOWN / DONE
+    created_at DATETIME NOT NULL,
+    PRIMARY KEY (id),
+    UNIQUE KEY uq_chat_rooms_exchange (exchange_id),
+    FOREIGN KEY (exchange_id) REFERENCES exchanges(id)
+);
+
+-- ===== messages (채팅 메시지, 엔티티명 ChatMessage) =====
+CREATE TABLE messages (
+    id BIGINT NOT NULL AUTO_INCREMENT,
+    chat_room_id BIGINT NOT NULL,
+    sender_user_id BIGINT,                -- 시스템 메시지는 발신자 없음(NULL)
+    type VARCHAR(20) NOT NULL,            -- TEXT / SYSTEM
+    content TEXT NOT NULL,
+    created_at DATETIME NOT NULL,
+    PRIMARY KEY (id),
+    INDEX idx_room_id (chat_room_id, id),
+    FOREIGN KEY (chat_room_id) REFERENCES chat_rooms(id),
+    FOREIGN KEY (sender_user_id) REFERENCES users(id)
+);
