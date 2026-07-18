@@ -95,6 +95,42 @@ CREATE TABLE push_subscriptions (
                                     FOREIGN KEY (user_id) REFERENCES users(id)
 );
 
+-- ===== posts =====
+CREATE TABLE posts (
+                       id BIGINT NOT NULL AUTO_INCREMENT,
+                       user_id BIGINT NOT NULL,
+                       discard_course_id BIGINT NOT NULL,
+                       status VARCHAR(20) NOT NULL,
+                       kakao_link VARCHAR(255),
+                       created_at DATETIME NOT NULL,
+                       PRIMARY KEY (id),
+                       FOREIGN KEY (user_id) REFERENCES users(id),
+                       FOREIGN KEY (discard_course_id) REFERENCES courses(id)
+);
+
+-- ===== post_wanted_courses =====
+CREATE TABLE post_wanted_courses (
+                                     id BIGINT NOT NULL AUTO_INCREMENT,
+                                     post_id BIGINT NOT NULL,
+                                     course_id BIGINT NOT NULL,
+                                     priority INT NOT NULL,
+                                     PRIMARY KEY (id),
+                                     UNIQUE KEY uk_post_priority (post_id, priority),
+                                     FOREIGN KEY (post_id) REFERENCES posts(id),
+                                     FOREIGN KEY (course_id) REFERENCES courses(id)
+);
+
+-- ===== likes (엔티티명은 PostLike, 테이블명은 likes — LIKE가 SQL 예약어라 회피) =====
+CREATE TABLE likes (
+                       id BIGINT NOT NULL AUTO_INCREMENT,
+                       user_id BIGINT NOT NULL,
+                       post_id BIGINT NOT NULL,
+                       created_at DATETIME NOT NULL,
+                       PRIMARY KEY (id),
+                       UNIQUE KEY uk_user_post (user_id, post_id),
+                       FOREIGN KEY (user_id) REFERENCES users(id),
+                       FOREIGN KEY (post_id) REFERENCES posts(id)
+);
 
 -- 라운지 게시글
 CREATE TABLE IF NOT EXISTS lounge_posts (
