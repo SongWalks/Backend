@@ -5,6 +5,7 @@ import com.sookmyung.swapclass.domain.lounge.entity.LoungePost;
 import com.sookmyung.swapclass.domain.user.entity.User;
 import org.springframework.data.jpa.repository.JpaRepository;
 
+import java.util.List;
 import java.util.Optional;
 
 public interface LoungeBookmarkRepository extends JpaRepository<LoungeBookmark, Long> {
@@ -14,4 +15,7 @@ public interface LoungeBookmarkRepository extends JpaRepository<LoungeBookmark, 
     boolean existsByPostAndUser(LoungePost post, User user);
 
     void deleteAllByPost(LoungePost post);
+
+    // 마이페이지 - 내가 북마크한 라운지 게시글 (북마크 최신순)
+    List<LoungeBookmark> findByUserIdOrderByCreatedAtDesc(Long userId);
 }

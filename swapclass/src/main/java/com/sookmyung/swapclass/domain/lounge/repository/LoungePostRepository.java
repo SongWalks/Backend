@@ -22,4 +22,7 @@ public interface LoungePostRepository extends JpaRepository<LoungePost, Long> {
     List<LoungePost> search(@Param("type") LoungePostType type,
                             @Param("courseId") Long courseId,
                             @Param("keyword") String keyword);
+
+    // 마이페이지 - 내가 작성한 라운지 게시글 (최신순)
+    List<LoungePost> findByUserIdOrderByCreatedAtDesc(Long userId);
 }
