@@ -254,3 +254,16 @@ CREATE TABLE messages (
     FOREIGN KEY (chat_room_id) REFERENCES chat_rooms(id),
     FOREIGN KEY (sender_user_id) REFERENCES users(id)
 );
+
+-- ===== graduation_courses (유저별 졸업요건 등록 과목) =====
+CREATE TABLE graduation_courses (
+    id BIGINT NOT NULL AUTO_INCREMENT,
+    user_id BIGINT NOT NULL,
+    course_id BIGINT NOT NULL,
+    completed BOOLEAN NOT NULL DEFAULT FALSE,
+    created_at DATETIME NOT NULL,
+    PRIMARY KEY (id),
+    UNIQUE KEY uk_graduation_user_course (user_id, course_id),
+    FOREIGN KEY (user_id) REFERENCES users(id),
+    FOREIGN KEY (course_id) REFERENCES courses(id)
+);

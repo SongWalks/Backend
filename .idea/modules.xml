@@ -3,6 +3,7 @@
   <component name="ProjectModuleManager">
     <modules>
       <module fileurl="file://$PROJECT_DIR$/.idea/modules/com.sookmyung.swapclass.main.iml" filepath="$PROJECT_DIR$/.idea/modules/com.sookmyung.swapclass.main.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/com.sookmyung.swapclass.test.iml" filepath="$PROJECT_DIR$/.idea/modules/com.sookmyung.swapclass.test.iml" />
       <module fileurl="file://$PROJECT_DIR$/.idea/swapclass.iml" filepath="$PROJECT_DIR$/.idea/swapclass.iml" />
     </modules>
   </component>
