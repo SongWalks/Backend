@@ -2,6 +2,7 @@ package com.sookmyung.swapclass.domain.graduation.service;
 
 import com.sookmyung.swapclass.domain.course.entity.Course;
 import com.sookmyung.swapclass.domain.course.repository.CourseRepository;
+import com.sookmyung.swapclass.domain.graduation.dto.response.GraduationCompletionResponse;
 import com.sookmyung.swapclass.domain.graduation.dto.response.GraduationCourseListResponse;
 import com.sookmyung.swapclass.domain.graduation.entity.GraduationCourse;
 import com.sookmyung.swapclass.domain.graduation.repository.GraduationCourseRepository;
@@ -53,5 +54,15 @@ public class GraduationCourseService {
                 .findByUserIdAndCourseId(userId, courseId)
                 .orElseThrow(() -> new CustomException(ErrorCode.GRADUATION_COURSE_NOT_FOUND));
         graduationCourseRepository.delete(graduationCourse);
+    }
+
+    // [이수 완료 토글] true <-> false 반복, 변경된 상태 반환
+    @Transactional
+    public GraduationCompletionResponse toggleCompleted(Long userId, Long courseId) {
+        GraduationCourse graduationCourse = graduationCourseRepository
+                .findByUserIdAndCourseId(userId, courseId)
+                .orElseThrow(() -> new CustomException(ErrorCode.GRADUATION_COURSE_NOT_FOUND));
+        graduationCourse.toggleCompleted();
+        return GraduationCompletionResponse.of(graduationCourse.isCompleted());
     }
 }

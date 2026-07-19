@@ -1,6 +1,7 @@
 package com.sookmyung.swapclass.domain.graduation.controller;
 
 import com.sookmyung.swapclass.domain.graduation.dto.request.GraduationCourseCreateRequest;
+import com.sookmyung.swapclass.domain.graduation.dto.response.GraduationCompletionResponse;
 import com.sookmyung.swapclass.domain.graduation.dto.response.GraduationCourseListResponse;
 import com.sookmyung.swapclass.domain.graduation.service.GraduationCourseService;
 import com.sookmyung.swapclass.global.response.ApiResponse;
@@ -10,6 +11,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -50,5 +52,13 @@ public class GraduationCourseController {
             @PathVariable Long courseId) {
         graduationCourseService.delete(userId, courseId);
         return ApiResponse.success(null, "졸업요건 과목이 삭제되었습니다.");
+    }
+
+    // [이수 완료 토글] 이수 여부 on/off
+    @PatchMapping("/{courseId}")
+    public ApiResponse<GraduationCompletionResponse> toggleCompleted(
+            @AuthenticationPrincipal Long userId,
+            @PathVariable Long courseId) {
+        return ApiResponse.success(graduationCourseService.toggleCompleted(userId, courseId));
     }
 }
