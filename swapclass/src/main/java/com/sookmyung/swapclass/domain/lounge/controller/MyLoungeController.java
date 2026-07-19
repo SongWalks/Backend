@@ -22,4 +22,11 @@ public class MyLoungeController {
             @AuthenticationPrincipal Long userId) {
         return ApiResponse.success(myLoungeService.getMyPosts(userId));
     }
+
+    // [북마크한 라운지 게시글 목록] 최신순
+    @GetMapping("/lounge-bookmarks")
+    public ApiResponse<LoungePostListResponse> getMyLoungeBookmarks(
+            @AuthenticationPrincipal Long userId) {
+        return ApiResponse.success(myLoungeService.getMyBookmarks(userId));
+    }
 }
