@@ -47,6 +47,10 @@ public enum ErrorCode {
     // 신고
     REPORT_IMAGE_REQUIRED(400, "신고 사진을 첨부해주세요."),
 
+    // 졸업요건
+    GRADUATION_COURSE_DUPLICATED(409, "이미 등록된 졸업요건 과목입니다."),
+    GRADUATION_COURSE_NOT_FOUND(404, "등록되지 않은 졸업요건 과목입니다."),
+
     //라운지
     LOUNGE_POST_NOT_FOUND(404, "존재하지 않는 라운지 게시글입니다."),
     LOUNGE_COMMENT_NOT_FOUND(404, "존재하지 않는 댓글입니다."),
