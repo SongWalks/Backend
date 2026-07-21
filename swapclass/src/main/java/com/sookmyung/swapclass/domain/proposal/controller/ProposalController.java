@@ -3,6 +3,7 @@ package com.sookmyung.swapclass.domain.proposal.controller;
 import com.sookmyung.swapclass.domain.proposal.dto.request.ProposalCreateRequest;
 import com.sookmyung.swapclass.domain.proposal.dto.response.CandidatePostResponse;
 import com.sookmyung.swapclass.domain.proposal.dto.response.ProposalCreateResponse;
+import com.sookmyung.swapclass.domain.proposal.dto.response.ProposalSummaryResponse;
 import com.sookmyung.swapclass.domain.proposal.service.ProposalService;
 import com.sookmyung.swapclass.global.response.ApiResponse;
 import jakarta.validation.Valid;
@@ -28,6 +29,14 @@ public class ProposalController {
     ) {
         ProposalCreateResponse response = proposalService.createProposal(userId, request);
         return ApiResponse.success(response, "교환 요청을 보냈습니다.");
+    }
+
+    // 보낸 제안 조회 (동시 최대 1개, 없으면 data=null)
+    @GetMapping("/api/proposals/sent")
+    public ApiResponse<ProposalSummaryResponse> getSentProposal(
+            @AuthenticationPrincipal Long userId
+    ) {
+        return ApiResponse.success(proposalService.getSentProposal(userId));
     }
 
     // 교환 제안 철회

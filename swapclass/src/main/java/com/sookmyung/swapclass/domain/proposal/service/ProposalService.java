@@ -1,6 +1,9 @@
 package com.sookmyung.swapclass.domain.proposal.service;
 
 import com.sookmyung.swapclass.domain.block.repository.UserBlockRepository;
+import com.sookmyung.swapclass.domain.chat.entity.ChatRoom;
+import com.sookmyung.swapclass.domain.chat.repository.ChatRoomRepository;
+import com.sookmyung.swapclass.domain.exchange.repository.ExchangeRepository;
 import com.sookmyung.swapclass.domain.notification.service.NotificationService;
 import com.sookmyung.swapclass.domain.post.entity.Post;
 import com.sookmyung.swapclass.domain.post.entity.PostStatus;
@@ -8,6 +11,7 @@ import com.sookmyung.swapclass.domain.post.repository.PostRepository;
 import com.sookmyung.swapclass.domain.proposal.dto.request.ProposalCreateRequest;
 import com.sookmyung.swapclass.domain.proposal.dto.response.CandidatePostResponse;
 import com.sookmyung.swapclass.domain.proposal.dto.response.ProposalCreateResponse;
+import com.sookmyung.swapclass.domain.proposal.dto.response.ProposalSummaryResponse;
 import com.sookmyung.swapclass.domain.proposal.entity.Proposal;
 import com.sookmyung.swapclass.domain.proposal.entity.ProposalStatus;
 import com.sookmyung.swapclass.domain.proposal.repository.ProposalRepository;
@@ -33,6 +37,8 @@ public class ProposalService {
     private final PostRepository postRepository;
     private final UserRepository userRepository;
     private final UserBlockRepository userBlockRepository;
+    private final ExchangeRepository exchangeRepository;
+    private final ChatRoomRepository chatRoomRepository;
     private final NotificationService notificationService;
 
     // ─── 제안 보내기 ──────────────────────────────────────────
@@ -92,6 +98,25 @@ public class ProposalService {
         }
 
         proposal.withdraw(); // WITHDRAWN → received 목록(PENDING 필터)에서 자동 제외, 요청 권한 복구
+    }
+
+    // ─── 보낸 제안 조회 ──────────────────────────────────────
+    // 동시에 최대 1개 → 가장 최근 보낸 요청 1건. 없으면 null. ACCEPTED면 chatRoomId 포함.
+    public ProposalSummaryResponse getSentProposal(Long userId) {
+        return proposalRepository.findFirstBySenderIdOrderByCreatedAtDesc(userId)
+                .map(proposal -> ProposalSummaryResponse.of(proposal, null, resolveChatRoomId(proposal)))
+                .orElse(null);
+    }
+
+    // 수락된 제안만 채팅방으로 연결 (제안 → 교환 → 채팅방)
+    private Long resolveChatRoomId(Proposal proposal) {
+        if (proposal.getStatus() != ProposalStatus.ACCEPTED) {
+            return null;
+        }
+        return exchangeRepository.findByProposalId(proposal.getId())
+                .flatMap(exchange -> chatRoomRepository.findByExchangeId(exchange.getId()))
+                .map(ChatRoom::getId)
+                .orElse(null);
     }
 
     // ─── 제안 가능한 내 게시글 조회 ───────────────────────────
