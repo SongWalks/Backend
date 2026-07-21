@@ -3,6 +3,7 @@ package com.sookmyung.swapclass.domain.proposal.service;
 import com.sookmyung.swapclass.domain.block.repository.UserBlockRepository;
 import com.sookmyung.swapclass.domain.chat.entity.ChatRoom;
 import com.sookmyung.swapclass.domain.chat.repository.ChatRoomRepository;
+import com.sookmyung.swapclass.domain.exchange.entity.Exchange;
 import com.sookmyung.swapclass.domain.exchange.repository.ExchangeRepository;
 import com.sookmyung.swapclass.domain.match.entity.MatchIgnore;
 import com.sookmyung.swapclass.domain.match.repository.MatchIgnoreRepository;
@@ -12,6 +13,7 @@ import com.sookmyung.swapclass.domain.post.entity.PostStatus;
 import com.sookmyung.swapclass.domain.post.repository.PostRepository;
 import com.sookmyung.swapclass.domain.proposal.dto.request.ProposalCreateRequest;
 import com.sookmyung.swapclass.domain.proposal.dto.response.CandidatePostResponse;
+import com.sookmyung.swapclass.domain.proposal.dto.response.ProposalAcceptResponse;
 import com.sookmyung.swapclass.domain.proposal.dto.response.ProposalCreateResponse;
 import com.sookmyung.swapclass.domain.proposal.dto.response.ProposalDetailResponse;
 import com.sookmyung.swapclass.domain.proposal.dto.response.ProposalSummaryResponse;
@@ -102,6 +104,65 @@ public class ProposalService {
         }
 
         proposal.withdraw(); // WITHDRAWN → received 목록(PENDING 필터)에서 자동 제외, 요청 권한 복구
+    }
+
+    // ─── 제안 수락 ────────────────────────────────────────────
+    @Transactional
+    public ProposalAcceptResponse acceptProposal(Long userId, Long proposalId) {
+        Proposal proposal = getProposalOrThrow(proposalId);
+        validateReceiver(proposal, userId);
+
+        // 상태 가드 (동시성 락은 MVP 유예): 비PENDING·만료·이미 교환중 방지
+        if (!proposal.isPending()) {
+            throw new CustomException(ErrorCode.PROPOSAL_NOT_PENDING);
+        }
+        if (proposal.isExpired()) {
+            throw new CustomException(ErrorCode.PROPOSAL_EXPIRED);
+        }
+        Post senderPost = proposal.getSenderPost();
+        Post receiverPost = proposal.getReceiverPost();
+        if (!senderPost.isMatchable() || !receiverPost.isMatchable()) {
+            throw new CustomException(ErrorCode.POST_NOT_MATCHABLE);
+        }
+
+        // 성사 처리: 제안 ACCEPTED, 양측 게시글 IN_EXCHANGE
+        proposal.accept();
+        senderPost.markInExchange();
+        receiverPost.markInExchange();
+
+        // 교환 + 채팅방 생성
+        Exchange exchange = Exchange.builder()
+                .proposal(proposal)
+                .postA(receiverPost)
+                .postB(senderPost)
+                .build();
+        exchangeRepository.save(exchange);
+
+        ChatRoom chatRoom = ChatRoom.builder().exchange(exchange).build();
+        chatRoomRepository.save(chatRoom);
+
+        // 두 게시글에 남아있던 다른 PENDING 요청 일괄 거절 + 알림 (재추천 차단은 하지 않음: 재도전 여지)
+        autoRejectOtherPendings(receiverPost, proposal.getId());
+        autoRejectOtherPendings(senderPost, proposal.getId());
+
+        // 성사 알림 (양측 모두 교환 준비방으로)
+        notificationService.sendMatchAcceptedNotification(proposal.getReceiver(), chatRoom.getId());
+        notificationService.sendMatchAcceptedNotification(proposal.getSender(), chatRoom.getId());
+
+        return new ProposalAcceptResponse(chatRoom.getId());
+    }
+
+    // 특정 게시글에 남은 다른 PENDING 요청을 일괄 거절 처리
+    private void autoRejectOtherPendings(Post post, Long acceptedProposalId) {
+        for (Proposal other : proposalRepository
+                .findByReceiverPostIdAndStatus(post.getId(), ProposalStatus.PENDING)) {
+            if (other.getId().equals(acceptedProposalId)) {
+                continue;
+            }
+            other.reject();
+            notificationService.sendMatchRejectedNotification(
+                    other.getSender(), other.getSenderPost().getId());
+        }
     }
 
     // ─── 제안 거절 ────────────────────────────────────────────

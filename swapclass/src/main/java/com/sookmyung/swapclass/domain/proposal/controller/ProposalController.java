@@ -2,6 +2,7 @@ package com.sookmyung.swapclass.domain.proposal.controller;
 
 import com.sookmyung.swapclass.domain.proposal.dto.request.ProposalCreateRequest;
 import com.sookmyung.swapclass.domain.proposal.dto.response.CandidatePostResponse;
+import com.sookmyung.swapclass.domain.proposal.dto.response.ProposalAcceptResponse;
 import com.sookmyung.swapclass.domain.proposal.dto.response.ProposalCreateResponse;
 import com.sookmyung.swapclass.domain.proposal.dto.response.ProposalDetailResponse;
 import com.sookmyung.swapclass.domain.proposal.dto.response.ProposalSummaryResponse;
@@ -55,6 +56,16 @@ public class ProposalController {
             @PathVariable Long proposalId
     ) {
         return ApiResponse.success(proposalService.getProposalDetail(userId, proposalId));
+    }
+
+    // 교환 제안 수락 (성사 → 교환 채팅방 생성)
+    @PostMapping("/api/proposals/{proposalId}/accept")
+    public ApiResponse<ProposalAcceptResponse> acceptProposal(
+            @AuthenticationPrincipal Long userId,
+            @PathVariable Long proposalId
+    ) {
+        ProposalAcceptResponse response = proposalService.acceptProposal(userId, proposalId);
+        return ApiResponse.success(response, "🤝 매칭이 성사되었습니다!");
     }
 
     // 교환 제안 거절
