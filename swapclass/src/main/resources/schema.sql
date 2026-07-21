@@ -209,6 +209,18 @@ CREATE TABLE proposals (
     FOREIGN KEY (receiver_post_id) REFERENCES posts(id)
 );
 
+-- ===== match_ignores (거절/무산 쌍 재추천 차단, 쌍 순서 정규화: 작은 id = post_a) =====
+CREATE TABLE match_ignores (
+    id BIGINT NOT NULL AUTO_INCREMENT,
+    post_a_id BIGINT NOT NULL,
+    post_b_id BIGINT NOT NULL,
+    created_at DATETIME NOT NULL,
+    PRIMARY KEY (id),
+    UNIQUE KEY uk_match_ignore_pair (post_a_id, post_b_id),
+    FOREIGN KEY (post_a_id) REFERENCES posts(id),
+    FOREIGN KEY (post_b_id) REFERENCES posts(id)
+);
+
 -- ===== exchanges (성사된 교환, 72h 자동완료) =====
 CREATE TABLE exchanges (
     id BIGINT NOT NULL AUTO_INCREMENT,
