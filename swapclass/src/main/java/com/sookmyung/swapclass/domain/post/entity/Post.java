@@ -83,6 +83,11 @@ public class Post {
         this.status = PostStatus.DELETED;
     }
 
+    // 교환 성사 → 교환 중 상태로 전환
+    public void markInExchange() {
+        this.status = PostStatus.IN_EXCHANGE;
+    }
+
     public boolean isOwnedBy(Long userId) {
         return this.user.getId().equals(userId);
     }
