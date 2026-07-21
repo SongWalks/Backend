@@ -11,6 +11,7 @@ import com.sookmyung.swapclass.domain.post.repository.PostRepository;
 import com.sookmyung.swapclass.domain.proposal.dto.request.ProposalCreateRequest;
 import com.sookmyung.swapclass.domain.proposal.dto.response.CandidatePostResponse;
 import com.sookmyung.swapclass.domain.proposal.dto.response.ProposalCreateResponse;
+import com.sookmyung.swapclass.domain.proposal.dto.response.ProposalDetailResponse;
 import com.sookmyung.swapclass.domain.proposal.dto.response.ProposalSummaryResponse;
 import com.sookmyung.swapclass.domain.proposal.entity.Proposal;
 import com.sookmyung.swapclass.domain.proposal.entity.ProposalStatus;
@@ -132,6 +133,23 @@ public class ProposalService {
                     return ProposalSummaryResponse.of(proposal, matchRank, null);
                 })
                 .toList();
+    }
+
+    // ─── 제안 상세 조회 ──────────────────────────────────────
+    // 발신자·수신자 본인만 조회 가능. 상대/내 게시글 정보 함께 반환.
+    public ProposalDetailResponse getProposalDetail(Long userId, Long proposalId) {
+        Proposal proposal = getProposalOrThrow(proposalId);
+
+        boolean participant = proposal.getSender().getId().equals(userId)
+                || proposal.getReceiver().getId().equals(userId);
+        if (!participant) {
+            throw new CustomException(ErrorCode.FORBIDDEN);
+        }
+
+        Integer matchRank = matchRankFor(
+                proposal.getReceiverPost(),
+                proposal.getSenderPost().getDiscardCourse().getId());
+        return ProposalDetailResponse.of(proposal, matchRank, userId);
     }
 
     // ─── 제안 가능한 내 게시글 조회 ───────────────────────────
