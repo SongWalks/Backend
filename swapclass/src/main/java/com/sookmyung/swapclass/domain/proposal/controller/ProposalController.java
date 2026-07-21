@@ -39,6 +39,14 @@ public class ProposalController {
         return ApiResponse.success(proposalService.getSentProposal(userId));
     }
 
+    // 받은 제안 목록 조회 (대기 중, 만료 임박순)
+    @GetMapping("/api/proposals/received")
+    public ApiResponse<List<ProposalSummaryResponse>> getReceivedProposals(
+            @AuthenticationPrincipal Long userId
+    ) {
+        return ApiResponse.success(proposalService.getReceivedProposals(userId));
+    }
+
     // 교환 제안 철회
     @DeleteMapping("/api/proposals/{proposalId}")
     public ApiResponse<Void> withdrawProposal(

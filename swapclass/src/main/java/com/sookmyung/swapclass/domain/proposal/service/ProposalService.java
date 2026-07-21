@@ -119,6 +119,21 @@ public class ProposalService {
                 .orElse(null);
     }
 
+    // ─── 받은 제안 목록 조회 ─────────────────────────────────
+    // 내 게시글에 들어온 대기 중 요청, 만료 임박순. matchRank는 내 희망 순위 기준.
+    public List<ProposalSummaryResponse> getReceivedProposals(Long userId) {
+        return proposalRepository
+                .findByReceiverIdAndStatusOrderByExpiresAtAsc(userId, ProposalStatus.PENDING)
+                .stream()
+                .map(proposal -> {
+                    Integer matchRank = matchRankFor(
+                            proposal.getReceiverPost(),
+                            proposal.getSenderPost().getDiscardCourse().getId());
+                    return ProposalSummaryResponse.of(proposal, matchRank, null);
+                })
+                .toList();
+    }
+
     // ─── 제안 가능한 내 게시글 조회 ───────────────────────────
     public List<CandidatePostResponse> getCandidates(Long userId, Long targetPostId) {
         Post targetPost = getPostOrThrow(targetPostId);
