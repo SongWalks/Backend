@@ -9,8 +9,12 @@ import org.springframework.data.repository.query.Param;
 import java.time.LocalDateTime;
 import java.util.Collection;
 import java.util.List;
+import java.util.Optional;
 
 public interface ExchangeRepository extends JpaRepository<Exchange, Long> {
+
+    // 성사된 제안으로 교환 조회 (제안 → 채팅방 연결용)
+    Optional<Exchange> findByProposalId(Long proposalId);
 
     // 자동 완료 대상 조회 (AutoConfirmJob용)
     List<Exchange> findByStatusAndAutoConfirmAtBefore(
