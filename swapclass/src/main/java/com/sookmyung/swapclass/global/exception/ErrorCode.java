@@ -36,8 +36,13 @@ public enum ErrorCode {
 
     // 교환 요청
     PROPOSAL_ALREADY_EXISTS(409, "이미 교환 요청을 보낸 게시글입니다."),
+    PROPOSAL_IN_PROGRESS(409, "진행 중인 교환 요청이 있습니다."),
     PROPOSAL_EXPIRED(400, "만료된 교환 요청입니다."),
     PROPOSAL_NOT_FOUND(404, "존재하지 않는 교환 요청입니다."),
+    PROPOSAL_NOT_PENDING(400, "대기 중인 요청만 철회할 수 있습니다."),
+    POST_NOT_MATCHABLE(400, "매칭 전 게시글에만 교환 요청을 보낼 수 있습니다."),
+    CANNOT_PROPOSE_TO_OWN_POST(400, "본인 게시글에는 교환 요청을 보낼 수 없습니다."),
+    BLOCKED_USER(403, "차단 관계에서는 교환 요청을 보낼 수 없습니다."),
 
     // 교환
     EXCHANGE_NOT_FOUND(404, "존재하지 않는 교환입니다."),
