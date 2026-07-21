@@ -4,6 +4,8 @@ import com.sookmyung.swapclass.domain.block.repository.UserBlockRepository;
 import com.sookmyung.swapclass.domain.chat.entity.ChatRoom;
 import com.sookmyung.swapclass.domain.chat.repository.ChatRoomRepository;
 import com.sookmyung.swapclass.domain.exchange.repository.ExchangeRepository;
+import com.sookmyung.swapclass.domain.match.entity.MatchIgnore;
+import com.sookmyung.swapclass.domain.match.repository.MatchIgnoreRepository;
 import com.sookmyung.swapclass.domain.notification.service.NotificationService;
 import com.sookmyung.swapclass.domain.post.entity.Post;
 import com.sookmyung.swapclass.domain.post.entity.PostStatus;
@@ -40,6 +42,7 @@ public class ProposalService {
     private final UserBlockRepository userBlockRepository;
     private final ExchangeRepository exchangeRepository;
     private final ChatRoomRepository chatRoomRepository;
+    private final MatchIgnoreRepository matchIgnoreRepository;
     private final NotificationService notificationService;
 
     // ─── 제안 보내기 ──────────────────────────────────────────
@@ -99,6 +102,24 @@ public class ProposalService {
         }
 
         proposal.withdraw(); // WITHDRAWN → received 목록(PENDING 필터)에서 자동 제외, 요청 권한 복구
+    }
+
+    // ─── 제안 거절 ────────────────────────────────────────────
+    @Transactional
+    public void rejectProposal(Long userId, Long proposalId) {
+        Proposal proposal = getProposalOrThrow(proposalId);
+        validateReceiver(proposal, userId);
+
+        if (!proposal.isPending()) {
+            throw new CustomException(ErrorCode.PROPOSAL_NOT_PENDING);
+        }
+
+        proposal.reject();
+        // 동일 쌍 재추천 차단 (무한 핑퐁 방지)
+        addMatchIgnore(proposal);
+        // 거절 알림
+        notificationService.sendMatchRejectedNotification(
+                proposal.getSender(), proposal.getSenderPost().getId());
     }
 
     // ─── 보낸 제안 조회 ──────────────────────────────────────
@@ -200,6 +221,25 @@ public class ProposalService {
     private void validateSender(Proposal proposal, Long userId) {
         if (!proposal.getSender().getId().equals(userId)) {
             throw new CustomException(ErrorCode.FORBIDDEN);
+        }
+    }
+
+    // 요청 받은 본인(게시글 주인)만 수락/거절 가능
+    private void validateReceiver(Proposal proposal, Long userId) {
+        if (!proposal.getReceiver().getId().equals(userId)) {
+            throw new CustomException(ErrorCode.FORBIDDEN);
+        }
+    }
+
+    // 거절/무산된 게시글 쌍을 정규화해 재추천 차단 목록에 추가 (중복 저장 방지)
+    private void addMatchIgnore(Proposal proposal) {
+        Long p1 = proposal.getSenderPost().getId();
+        Long p2 = proposal.getReceiverPost().getId();
+        Long aId = Math.min(p1, p2);
+        Long bId = Math.max(p1, p2);
+        if (!matchIgnoreRepository.existsByPostAIdAndPostBId(aId, bId)) {
+            matchIgnoreRepository.save(
+                    MatchIgnore.of(proposal.getSenderPost(), proposal.getReceiverPost()));
         }
     }
 }

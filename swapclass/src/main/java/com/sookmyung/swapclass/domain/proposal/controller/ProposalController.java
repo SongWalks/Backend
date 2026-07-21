@@ -57,6 +57,16 @@ public class ProposalController {
         return ApiResponse.success(proposalService.getProposalDetail(userId, proposalId));
     }
 
+    // 교환 제안 거절
+    @PostMapping("/api/proposals/{proposalId}/reject")
+    public ApiResponse<Void> rejectProposal(
+            @AuthenticationPrincipal Long userId,
+            @PathVariable Long proposalId
+    ) {
+        proposalService.rejectProposal(userId, proposalId);
+        return ApiResponse.success(null, "교환 요청을 거절했습니다.");
+    }
+
     // 교환 제안 철회
     @DeleteMapping("/api/proposals/{proposalId}")
     public ApiResponse<Void> withdrawProposal(
