@@ -28,6 +28,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 /**
@@ -104,6 +105,19 @@ public class ProposalService {
         }
 
         proposal.withdraw(); // WITHDRAWN → received 목록(PENDING 필터)에서 자동 제외, 요청 권한 복구
+    }
+
+    // ─── 제안 만료 처리 (스케줄러 호출) ───────────────────────
+    // 30분 무응답 PENDING 요청을 EXPIRED로 전환하고 발신자에게 타임아웃 알림.
+    // 만료는 의도적 거절이 아니므로 match_ignores에 넣지 않는다(재매칭 여지).
+    @Transactional
+    public void expireOverdueProposals() {
+        List<Proposal> overdue = proposalRepository
+                .findByStatusAndExpiresAtBefore(ProposalStatus.PENDING, LocalDateTime.now());
+        for (Proposal proposal : overdue) {
+            proposal.markExpired();
+            notificationService.sendMatchTimeoutNotification(proposal.getSender());
+        }
     }
 
     // ─── 제안 수락 ────────────────────────────────────────────
