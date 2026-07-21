@@ -8,6 +8,7 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
+import java.time.Duration;
 import java.time.LocalDateTime;
 
 @Entity
@@ -90,5 +91,11 @@ public class Proposal {
 
     public boolean isExpired() {
         return LocalDateTime.now().isAfter(this.expiresAt);
+    }
+
+    // 남은 유효시간(초). 이미 만료됐으면 0. (응답 DTO의 remainSeconds용)
+    public long getRemainSeconds() {
+        long seconds = Duration.between(LocalDateTime.now(), this.expiresAt).getSeconds();
+        return Math.max(seconds, 0);
     }
 }
