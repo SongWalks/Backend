@@ -17,6 +17,7 @@ import com.sookmyung.swapclass.domain.proposal.dto.response.ProposalAcceptRespon
 import com.sookmyung.swapclass.domain.proposal.dto.response.ProposalCreateResponse;
 import com.sookmyung.swapclass.domain.proposal.dto.response.ProposalDetailResponse;
 import com.sookmyung.swapclass.domain.proposal.dto.response.ProposalSummaryResponse;
+import com.sookmyung.swapclass.domain.proposal.dto.response.ReceivedProposalCardResponse;
 import com.sookmyung.swapclass.domain.proposal.entity.Proposal;
 import com.sookmyung.swapclass.domain.proposal.entity.ProposalStatus;
 import com.sookmyung.swapclass.domain.proposal.repository.ProposalRepository;
@@ -213,6 +214,24 @@ public class ProposalService {
                             proposal.getReceiverPost(),
                             proposal.getSenderPost().getDiscardCourse().getId());
                     return ProposalSummaryResponse.of(proposal, matchRank, null);
+                })
+                .toList();
+    }
+
+    // ─── 홈화면 받은 제안함 카드 조회 ────────────────────────
+    // 받은 대기 중 제안을 카드(내 과목↔상대 과목+타이머)로 변환. 비로그인/없음이면 빈 목록.
+    public List<ReceivedProposalCardResponse> getReceivedProposalCards(Long userId) {
+        if (userId == null) {
+            return List.of();
+        }
+        return proposalRepository
+                .findByReceiverIdAndStatusOrderByExpiresAtAsc(userId, ProposalStatus.PENDING)
+                .stream()
+                .map(proposal -> {
+                    Integer matchRank = matchRankFor(
+                            proposal.getReceiverPost(),
+                            proposal.getSenderPost().getDiscardCourse().getId());
+                    return ReceivedProposalCardResponse.of(proposal, matchRank);
                 })
                 .toList();
     }

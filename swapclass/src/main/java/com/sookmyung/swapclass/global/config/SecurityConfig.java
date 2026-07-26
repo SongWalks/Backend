@@ -51,6 +51,8 @@ public class SecurityConfig {
                                 "/api/auth/signup",
                                 "/api/auth/login",
                                 "/api/auth/token/refresh",
+                                // 홈화면 통합 조회(비로그인 둘러보기 허용, 인증 optional)
+                                "/api/home",
                                 "/api/test/**",
                                 // Swagger UI / API 문서
                                 "/swagger-ui/**",
