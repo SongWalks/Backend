@@ -8,6 +8,7 @@ import com.sookmyung.swapclass.domain.post.dto.response.PostCreateResponse;
 import com.sookmyung.swapclass.domain.post.dto.response.MyPostResponse;
 import com.sookmyung.swapclass.domain.post.dto.response.PostDetailResponse;
 import com.sookmyung.swapclass.domain.post.dto.response.PostFeedResponse;
+import com.sookmyung.swapclass.domain.post.dto.response.RecommendedFeedResponse;
 import com.sookmyung.swapclass.domain.post.entity.Post;
 import com.sookmyung.swapclass.domain.post.entity.PostStatus;
 import com.sookmyung.swapclass.domain.post.entity.PostWantedCourse;
@@ -97,6 +98,18 @@ public class PostService {
                 .findFeed(PostStatus.MATCHABLE, userId, dept, pageable)
                 .map(PostFeedResponse::from);
         return PageResponse.from(feed);
+    }
+
+    // 홈 추천 매칭 피드 (양방향 교집합, 최신순, 페이징). 비로그인/내 글 없음이면 빈 결과.
+    public RecommendedFeedResponse getRecommendedFeed(Long userId, int page, int size) {
+        if (userId == null) {
+            return RecommendedFeedResponse.empty();
+        }
+        Pageable pageable = PageRequest.of(page, size);
+        Page<PostFeedResponse> feed = postRepository
+                .findRecommendedFeed(PostStatus.MATCHABLE, userId, pageable)
+                .map(PostFeedResponse::from);
+        return RecommendedFeedResponse.from(feed);
     }
 
     // 내 교환 게시글 목록 (status 지정 시 해당 상태만, 없으면 전체 - 삭제 제외)
