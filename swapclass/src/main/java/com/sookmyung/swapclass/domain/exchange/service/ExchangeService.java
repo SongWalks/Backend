@@ -6,6 +6,7 @@ import com.sookmyung.swapclass.domain.chat.repository.ChatRoomRepository;
 import com.sookmyung.swapclass.domain.exchange.dto.request.CancelRequest;
 import com.sookmyung.swapclass.domain.exchange.dto.request.ResultRequest;
 import com.sookmyung.swapclass.domain.exchange.dto.request.ScheduleRequest;
+import com.sookmyung.swapclass.domain.exchange.dto.response.HeroBannerResponse;
 import com.sookmyung.swapclass.domain.exchange.dto.response.ResultResponse;
 import com.sookmyung.swapclass.domain.exchange.dto.response.ScheduleResponse;
 import com.sookmyung.swapclass.domain.exchange.entity.Exchange;
@@ -14,8 +15,13 @@ import com.sookmyung.swapclass.domain.exchange.repository.ExchangeRepository;
 import com.sookmyung.swapclass.global.exception.CustomException;
 import com.sookmyung.swapclass.global.exception.ErrorCode;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.time.Duration;
+import java.time.LocalDateTime;
+import java.util.List;
 
 @Service
 @RequiredArgsConstructor
@@ -76,6 +82,26 @@ public class ExchangeService {
         chatRoom.changeStatus(ChatRoomStatus.DONE);
 
         // TODO: 귀책 없는 유저 게시글 MATCHABLE 롤백 + 양측 알림 발송
+    }
+
+    // 홈 히어로 배너: 시간 확정된 진행 중 교환 중 가장 임박한 1건. 없으면(비로그인 포함) null.
+    public HeroBannerResponse getHomeHeroBanner(Long userId) {
+        if (userId == null) {
+            return null;
+        }
+        List<Exchange> exchanges = exchangeRepository.findParticipatingWithSchedule(
+                ExchangeStatus.IN_PROGRESS, userId, PageRequest.of(0, 1));
+        if (exchanges.isEmpty()) {
+            return null;
+        }
+        Exchange exchange = exchanges.get(0);
+        Long chatRoomId = chatRoomRepository.findByExchangeId(exchange.getId())
+                .map(ChatRoom::getId)
+                .orElse(null);
+        long remainSeconds = Math.max(
+                Duration.between(LocalDateTime.now(), exchange.getScheduledAt()).getSeconds(), 0);
+        return new HeroBannerResponse(
+                exchange.getId(), chatRoomId, exchange.getScheduledAt(), remainSeconds);
     }
 
     // ─── private 헬퍼 ────────────────────────────────────────
