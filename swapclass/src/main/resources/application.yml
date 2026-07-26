@@ -36,6 +36,7 @@ springdoc:
 
 server:
   port: 8080
+  forward-headers-strategy: framework
 
 jwt:
   access-token-validity: 1800000      # 30분 (ms)
