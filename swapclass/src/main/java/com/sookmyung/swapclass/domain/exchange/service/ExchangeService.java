@@ -12,6 +12,8 @@ import com.sookmyung.swapclass.domain.exchange.dto.response.ScheduleResponse;
 import com.sookmyung.swapclass.domain.exchange.entity.Exchange;
 import com.sookmyung.swapclass.domain.exchange.entity.ExchangeStatus;
 import com.sookmyung.swapclass.domain.exchange.repository.ExchangeRepository;
+import com.sookmyung.swapclass.domain.post.dto.response.CourseSummaryResponse;
+import com.sookmyung.swapclass.domain.post.entity.Post;
 import com.sookmyung.swapclass.global.exception.CustomException;
 import com.sookmyung.swapclass.global.exception.ErrorCode;
 import lombok.RequiredArgsConstructor;
@@ -98,10 +100,21 @@ public class ExchangeService {
         Long chatRoomId = chatRoomRepository.findByExchangeId(exchange.getId())
                 .map(ChatRoom::getId)
                 .orElse(null);
+
+        // 내 게시글/상대 게시글 판별 → 넘기는 과목/받는 과목
+        boolean isA = exchange.getPostA().getUser().getId().equals(userId);
+        Post myPost = isA ? exchange.getPostA() : exchange.getPostB();
+        Post partnerPost = isA ? exchange.getPostB() : exchange.getPostA();
+
         long remainSeconds = Math.max(
                 Duration.between(LocalDateTime.now(), exchange.getScheduledAt()).getSeconds(), 0);
         return new HeroBannerResponse(
-                exchange.getId(), chatRoomId, exchange.getScheduledAt(), remainSeconds);
+                exchange.getId(),
+                chatRoomId,
+                CourseSummaryResponse.from(myPost.getDiscardCourse()),
+                CourseSummaryResponse.from(partnerPost.getDiscardCourse()),
+                exchange.getScheduledAt(),
+                remainSeconds);
     }
 
     // ─── private 헬퍼 ────────────────────────────────────────
