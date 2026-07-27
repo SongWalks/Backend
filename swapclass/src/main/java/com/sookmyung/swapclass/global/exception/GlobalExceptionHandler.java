@@ -7,6 +7,8 @@ import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
+import java.util.Map;
+
 @RestControllerAdvice(basePackages = "com.sookmyung.swapclass")
 public class GlobalExceptionHandler {
 
@@ -35,4 +37,12 @@ public class GlobalExceptionHandler {
                 .status(500)
                 .body(ApiResponse.fail("서버 내부 오류입니다."));
     }
+
+    @ExceptionHandler(SuspendedUserException.class)
+    public ResponseEntity<ApiResponse<?>> handleSuspendedException(SuspendedUserException e) {
+        return ResponseEntity
+                .status(403)
+                .body(ApiResponse.fail(e.getMessage(), Map.of("suspendedUntil", e.getSuspendedUntil())));
+    }
 }
+

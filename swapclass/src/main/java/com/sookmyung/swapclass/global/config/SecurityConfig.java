@@ -83,7 +83,8 @@ public class SecurityConfig {
         // 허용할 프론트 origin. credentials 사용 시 "*" 불가 → 명시적으로 나열
         config.setAllowedOrigins(List.of(
                 "http://localhost:5173",
-                "https://localhost:5173"
+                "https://localhost:5173",
+                "http://localhost:8080"
         ));
         config.setAllowedMethods(List.of("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
         config.setAllowedHeaders(List.of("*"));
