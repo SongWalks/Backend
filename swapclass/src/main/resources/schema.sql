@@ -279,3 +279,14 @@ CREATE TABLE graduation_courses (
     FOREIGN KEY (user_id) REFERENCES users(id),
     FOREIGN KEY (course_id) REFERENCES courses(id)
 );
+
+-- ===== inquiries =====
+CREATE TABLE inquiries (
+                           id BIGINT NOT NULL AUTO_INCREMENT,
+                           user_id BIGINT NOT NULL,
+                           content TEXT NOT NULL,
+                           related_report_id BIGINT,
+                           created_at DATETIME NOT NULL,
+                           PRIMARY KEY (id),
+                           FOREIGN KEY (user_id) REFERENCES users(id)
+);
