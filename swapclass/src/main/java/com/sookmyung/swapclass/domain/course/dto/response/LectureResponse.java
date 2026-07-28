@@ -15,7 +15,10 @@ public record LectureResponse(
         String department,
         String category,
         String area,
-        boolean isGraduationReq
+        boolean isGraduationReq,
+        String code,
+        String section,
+        String credits
 ) {
     public static LectureResponse from(Course course) {
         return new LectureResponse(
@@ -27,7 +30,10 @@ public record LectureResponse(
                 course.getDepartment(),
                 course.getCategory(),
                 course.getArea(),
-                course.isGraduationReq()
+                course.isGraduationReq(),
+                course.getCode(),
+                course.getSection(),
+                course.getCredits()
         );
     }
 }
