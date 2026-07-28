@@ -16,6 +16,7 @@ import com.sookmyung.swapclass.domain.post.dto.response.CourseSummaryResponse;
 import com.sookmyung.swapclass.domain.post.entity.Post;
 import com.sookmyung.swapclass.global.exception.CustomException;
 import com.sookmyung.swapclass.global.exception.ErrorCode;
+import com.sookmyung.swapclass.domain.notification.service.NotificationService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
@@ -32,6 +33,7 @@ public class ExchangeService {
 
     private final ExchangeRepository exchangeRepository;
     private final ChatRoomRepository chatRoomRepository;
+    private final NotificationService notificationService;
 
     // 교환 시간 확정
     @Transactional
@@ -83,7 +85,13 @@ public class ExchangeService {
                 (request.getDetail() != null ? " - " + request.getDetail() : ""));
         chatRoom.changeStatus(ChatRoomStatus.DONE);
 
-        // TODO: 귀책 없는 유저 게시글 MATCHABLE 롤백 + 양측 알림 발송
+        // 양측 게시글 MATCHABLE 롤백
+        exchange.getPostA().rollbackToMatchable();
+        exchange.getPostB().rollbackToMatchable();
+
+        // 양측 알림 발송
+        notificationService.sendMatchRollbackNotification(exchange.getPostA().getUser());
+        notificationService.sendMatchRollbackNotification(exchange.getPostB().getUser());
     }
 
     // 홈 히어로 배너: 시간 확정된 진행 중 교환 중 가장 임박한 1건. 없으면(비로그인 포함) null.
