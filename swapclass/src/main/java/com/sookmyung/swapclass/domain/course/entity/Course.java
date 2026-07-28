@@ -40,9 +40,19 @@ public class Course {
     @Column(name = "is_graduation_req")
     private boolean isGraduationReq;
 
+    @Column
+    private String code;
+
+    @Column
+    private String section;
+
+    @Column
+    private String credits;
+
     @Builder
     public Course(String name, String professor, String classTime, String courseType,
-                  String department, String category, String area, boolean isGraduationReq) {
+                  String department, String category, String area, boolean isGraduationReq,
+                  String code, String section, String credits) {
         this.name = name;
         this.professor = professor;
         this.classTime = classTime;
@@ -51,5 +61,8 @@ public class Course {
         this.category = category;
         this.area = area;
         this.isGraduationReq = isGraduationReq;
+        this.code = code;
+        this.section = section;
+        this.credits = credits;
     }
 }
