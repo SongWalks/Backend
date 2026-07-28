@@ -19,6 +19,10 @@ public interface GraduationCourseRepository extends JpaRepository<GraduationCour
     // 내 졸업요건 과목 전체 (최신순)
     List<GraduationCourse> findByUserIdOrderByCreatedAtDesc(Long userId);
 
+    // 내 졸업요건으로 등록된 course id 목록 (강의 검색 시 상단 노출 판별용)
+    @Query("select g.course.id from GraduationCourse g where g.user.id = :userId")
+    List<Long> findCourseIdsByUserId(@Param("userId") Long userId);
+
     // 과목명 검색 (q) — 최신순
     @Query("select g from GraduationCourse g join g.course c " +
             "where g.user.id = :userId and c.name like %:keyword% " +
