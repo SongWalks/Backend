@@ -9,6 +9,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
+import org.springframework.http.MediaType;
 
 @RestController
 @RequestMapping("/api/exchanges")
@@ -27,11 +28,11 @@ public class VerificationController {
     }
 
     // 캡처 업로드 + QR 검증
-    @PostMapping("/{exchangeId}/verifications/capture")
+    @PostMapping(value = "/{exchangeId}/verifications/capture", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<ApiResponse<VerifyUploadResponse>> uploadAndVerify(
             @PathVariable Long exchangeId,
             @RequestParam("image") MultipartFile image,
-            @AuthenticationPrincipal Long userId) {
+            @AuthenticationPrincipal Long userId) {  
         VerifyUploadResponse response = verificationService.uploadAndVerify(exchangeId, userId, image);
         return ResponseEntity.ok(ApiResponse.success(response));
     }
