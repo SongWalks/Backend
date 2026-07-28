@@ -12,6 +12,7 @@ public record LoungePostSummaryResponse(
         Long courseId,
         String courseName,
         String title,
+        String content,
         int likeCount,
         int commentCount,
         LocalDateTime createdAt
@@ -23,6 +24,7 @@ public record LoungePostSummaryResponse(
                 post.getCourse().getId(),
                 post.getCourse().getName(),
                 post.getTitle(),
+                post.getContent(),
                 post.getLikeCount(),
                 post.getCommentCount(),
                 post.getCreatedAt()
