@@ -1,5 +1,6 @@
 package com.sookmyung.swapclass.global.config;
 
+import com.sookmyung.swapclass.domain.user.repository.UserRepository;
 import com.sookmyung.swapclass.global.jwt.JwtAuthenticationFilter;
 import com.sookmyung.swapclass.global.jwt.JwtTokenProvider;
 import lombok.RequiredArgsConstructor;
@@ -24,6 +25,7 @@ import java.util.List;
 public class SecurityConfig {
 
     private final JwtTokenProvider jwtTokenProvider; // 필터에 넘겨줄 토큰 검증 도구
+    private final UserRepository userRepository; // 정지 유저 체크용
 
     // 비밀번호 해싱기(BCrypt). AuthService가 주입받아 encode/matches에 사용
     @Bean
@@ -69,7 +71,7 @@ public class SecurityConfig {
                 .formLogin(formLogin -> formLogin.disable())
                 // 스프링 기본 인증 필터 앞에 우리 JWT 필터를 끼워 넣음
                 .addFilterBefore(
-                        new JwtAuthenticationFilter(jwtTokenProvider),
+                        new JwtAuthenticationFilter(jwtTokenProvider, userRepository),
                         UsernamePasswordAuthenticationFilter.class
                 );
 

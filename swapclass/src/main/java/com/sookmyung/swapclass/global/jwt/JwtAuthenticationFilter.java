@@ -1,5 +1,7 @@
 package com.sookmyung.swapclass.global.jwt;
 
+import com.sookmyung.swapclass.domain.user.entity.User;
+import com.sookmyung.swapclass.domain.user.repository.UserRepository;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -19,6 +21,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     private static final String BEARER_PREFIX = "Bearer ";
 
     private final JwtTokenProvider jwtTokenProvider;
+    private final UserRepository userRepository;
 
     @Override
     protected void doFilterInternal(HttpServletRequest request,
@@ -29,6 +32,19 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
         if (token != null && jwtTokenProvider.validate(token)) {
             Long userId = jwtTokenProvider.getUserId(token);
+
+            // 정지 유저 체크
+            User user = userRepository.findById(userId).orElse(null);
+            if (user != null && user.isSuspended()) {
+                response.setStatus(HttpServletResponse.SC_FORBIDDEN);
+                response.setContentType("application/json;charset=UTF-8");
+                response.getWriter().write(
+                        "{\"success\":false,\"data\":{\"suspendedUntil\":\"" +
+                                user.getSuspendedUntil() + "\"},\"message\":\"정지된 계정입니다.\"}"
+                );
+                return;
+            }
+
             UsernamePasswordAuthenticationToken authentication =
                     new UsernamePasswordAuthenticationToken(userId, null, Collections.emptyList());
             SecurityContextHolder.getContext().setAuthentication(authentication);
