@@ -1,6 +1,7 @@
 package com.sookmyung.swapclass.domain.user.service;
 
 import com.sookmyung.swapclass.domain.user.dto.request.LoginRequest;
+import com.sookmyung.swapclass.domain.user.dto.request.PasswordResetRequest;
 import com.sookmyung.swapclass.domain.user.dto.request.SignupRequest;
 import com.sookmyung.swapclass.domain.user.dto.request.TokenRefreshRequest;
 import com.sookmyung.swapclass.domain.user.dto.response.EmailExistsResponse;
@@ -115,6 +116,36 @@ public class AuthService {
             throw new CustomException(ErrorCode.UNAUTHORIZED);
         }
         return issueTokens(userId);                              // 새 토큰 발급(refresh도 교체)
+    }
+
+    // [API 8] 비밀번호 재설정 - 인증코드 발송 (가입된 이메일에만 발송)
+    public void sendPasswordResetCode(String email) {
+        if (!userRepository.existsByEmail(email)) {   // 가입 안 된 이메일이면 404
+            throw new CustomException(ErrorCode.USER_NOT_FOUND);
+        }
+        String code = generateCode();                 // 6자리 코드 생성
+        authCodeStore.saveCode(email, code);           // Redis에 저장(5분 만료)
+        emailService.sendPasswordResetCode(email, code); // 재설정용 메일로 발송
+    }
+    // 인증코드 확인은 회원가입과 동일 → 기존 verifyEmailCode 재사용(인증완료 플래그 공유)
+
+    // [API 9] 비밀번호 재설정 (인증 완료 후 새 비밀번호로 교체)
+    @Transactional
+    public void resetPassword(PasswordResetRequest request) {
+        if (!request.newPassword().equals(request.newPasswordConfirm())) {  // 비번≠비번확인 → 400
+            throw new CustomException(ErrorCode.INVALID_PASSWORD);
+        }
+        if (!authCodeStore.isVerified(request.email())) {   // 이메일 인증 안했으면 403
+            throw new CustomException(ErrorCode.EMAIL_NOT_VERIFIED);
+        }
+        User user = userRepository.findByEmail(request.email())
+                .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND)); // 없는 이메일 404
+        if (passwordEncoder.matches(request.newPassword(), user.getPassword())) {  // 기존 비번 재사용 금지 400
+            throw new CustomException(ErrorCode.PASSWORD_SAME_AS_OLD);
+        }
+        user.updatePassword(passwordEncoder.encode(request.newPassword())); // 새 비번 해시 저장
+        authCodeStore.deleteVerified(request.email());  // 인증완료 플래그 정리
+        refreshTokenStore.delete(user.getId());         // 보안상 기존 로그인 세션 무효화
     }
 
     // --- 내부 헬퍼들 ---

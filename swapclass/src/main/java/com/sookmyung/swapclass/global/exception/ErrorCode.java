@@ -19,6 +19,7 @@ public enum ErrorCode {
     EMAIL_DUPLICATED(409, "이미 사용 중인 이메일입니다."),
     EMAIL_NOT_VERIFIED(403, "이메일 인증이 완료되지 않았습니다."),
     INVALID_PASSWORD(400, "비밀번호가 올바르지 않습니다."),
+    PASSWORD_SAME_AS_OLD(400, "기존 비밀번호와 다른 비밀번호를 사용해주세요."),
     USER_NOT_FOUND(404, "존재하지 않는 사용자입니다."),
     USER_SUSPENDED(403, "정지된 계정입니다."),
 
