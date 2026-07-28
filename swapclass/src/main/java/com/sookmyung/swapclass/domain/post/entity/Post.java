@@ -95,4 +95,8 @@ public class Post {
     public boolean isMatchable() {
         return this.status == PostStatus.MATCHABLE;
     }
+
+    public void rollbackToMatchable() {
+        this.status = PostStatus.MATCHABLE;
+    }
 }
