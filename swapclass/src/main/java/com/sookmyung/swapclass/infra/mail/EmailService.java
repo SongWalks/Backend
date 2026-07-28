@@ -18,4 +18,12 @@ public class EmailService {
         message.setText("인증코드: " + code + "\n5분 이내에 입력해 주세요.");
         mailSender.send(message);
     }
+
+    public void sendPasswordResetCode(String to, String code) {
+        SimpleMailMessage message = new SimpleMailMessage();
+        message.setTo(to);
+        message.setSubject("[수강구조대] 비밀번호 재설정 인증코드");
+        message.setText("비밀번호 재설정 인증코드: " + code + "\n5분 이내에 입력해 주세요.");
+        mailSender.send(message);
+    }
 }

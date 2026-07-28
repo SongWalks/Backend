@@ -3,6 +3,7 @@ package com.sookmyung.swapclass.domain.user.controller;
 import com.sookmyung.swapclass.domain.user.dto.request.EmailCodeRequest;
 import com.sookmyung.swapclass.domain.user.dto.request.EmailVerifyRequest;
 import com.sookmyung.swapclass.domain.user.dto.request.LoginRequest;
+import com.sookmyung.swapclass.domain.user.dto.request.PasswordResetRequest;
 import com.sookmyung.swapclass.domain.user.dto.request.SignupRequest;
 import com.sookmyung.swapclass.domain.user.dto.request.TokenRefreshRequest;
 import com.sookmyung.swapclass.domain.user.dto.response.EmailExistsResponse;
@@ -68,5 +69,21 @@ public class AuthController {
     @PostMapping("/token/refresh")
     public ApiResponse<TokenResponse> refresh(@Valid @RequestBody TokenRefreshRequest request) {
         return ApiResponse.success(authService.refresh(request));
+    }
+
+    // [8] 비밀번호 재설정 - 인증코드 발송 (가입된 이메일에만)
+    @PostMapping("/password/email/code")
+    public ApiResponse<Void> sendPasswordResetCode(@Valid @RequestBody EmailCodeRequest request) {
+        authService.sendPasswordResetCode(request.email());
+        return ApiResponse.success(null, "비밀번호 재설정 인증코드를 발송했습니다.");
+    }
+
+    // 인증코드 확인은 회원가입과 동일하게 [2] POST /api/auth/email/verify 를 그대로 사용
+
+    // [9] 비밀번호 재설정 → 새 비밀번호로 교체
+    @PostMapping("/password/reset")
+    public ApiResponse<Void> resetPassword(@Valid @RequestBody PasswordResetRequest request) {
+        authService.resetPassword(request);
+        return ApiResponse.success(null, "비밀번호가 변경되었습니다.");
     }
 }
