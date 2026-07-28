@@ -45,7 +45,6 @@ dependencies {
 	// AWS S3 (SDK v2) - s3 모듈이 auth/regions까지 전이 의존으로 포함
 	implementation(platform("software.amazon.awssdk:bom:2.28.29"))
 	implementation("software.amazon.awssdk:s3")
-	implementation("org.springframework.cloud:spring-cloud-starter-aws:2.2.6.RELEASE")
 
 	compileOnly("org.projectlombok:lombok")
 	runtimeOnly("com.mysql:mysql-connector-j")
