@@ -1,14 +1,24 @@
 package com.sookmyung.swapclass.domain.chat.service;
 
-import com.sookmyung.swapclass.domain.chat.dto.ChatMessage;
+import com.sookmyung.swapclass.domain.chat.dto.response.ChatMessageResponse;
+import com.sookmyung.swapclass.domain.chat.dto.response.ChatRoomDetailResponse;
+import com.sookmyung.swapclass.domain.chat.dto.response.ChatRoomResponse;
+import com.sookmyung.swapclass.domain.chat.dto.response.MessageListResponse;
+import com.sookmyung.swapclass.domain.chat.entity.ChatMessage;
 import com.sookmyung.swapclass.domain.chat.entity.ChatRoom;
+import com.sookmyung.swapclass.domain.chat.entity.MessageType;
+import com.sookmyung.swapclass.domain.chat.repository.ChatMessageRepository;
 import com.sookmyung.swapclass.domain.chat.repository.ChatRoomRepository;
+import com.sookmyung.swapclass.domain.exchange.entity.Exchange;
 import com.sookmyung.swapclass.global.exception.CustomException;
 import com.sookmyung.swapclass.global.exception.ErrorCode;
 import lombok.RequiredArgsConstructor;
-import org.springframework.messaging.simp.SimpMessagingTemplate;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.util.List;
 
 @Service
 @RequiredArgsConstructor
@@ -16,21 +26,67 @@ import org.springframework.transaction.annotation.Transactional;
 public class ChatRoomService {
 
     private final ChatRoomRepository chatRoomRepository;
-    private final SimpMessagingTemplate messagingTemplate;
+    private final ChatMessageRepository chatMessageRepository;
+    private final com.sookmyung.swapclass.domain.user.repository.UserRepository userRepository;
 
-    // 채팅방 조회
-    public ChatRoom getChatRoom(Long roomId) {
-        return chatRoomRepository.findById(roomId)
-                .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND));
+    // ── #1 채팅방 조회 (상태 + 메시지 내역, 커서 페이징) ─────────────
+    public ChatRoomDetailResponse getChatRoomDetail(Long roomId, Long userId, Long before, int size) {
+        ChatRoom room = getRoomAndValidate(roomId, userId);
+        List<ChatMessageResponse> messages = fetchMessages(roomId, before, size);
+        return new ChatRoomDetailResponse(ChatRoomResponse.from(room), messages);
     }
 
-    // 시스템 메시지 발송 (상태 전이 시 채팅방에 알림)
-    public void sendSystemMessage(Long roomId, String content) {
-        ChatMessage systemMessage = new ChatMessage();
-        systemMessage.setRoomId(roomId);
-        systemMessage.setContent(content);
-        systemMessage.setType(ChatMessage.MessageType.SYSTEM);
+    // ── #2 메시지 목록 조회 (커서 페이징) ────────────────────────────
+    public MessageListResponse getMessages(Long roomId, Long userId, Long before, int size) {
+        getRoomAndValidate(roomId, userId);   // 참여자 검증만 수행
+        return new MessageListResponse(fetchMessages(roomId, before, size));
+    }
 
-        messagingTemplate.convertAndSend("/topic/chat/" + roomId, systemMessage);
+    // ── #3 WS 수신 메시지 저장 후 브로드캐스트용 DTO 반환 ─────────────
+    @Transactional
+    public ChatMessageResponse saveTextMessage(Long roomId, Long userId, String content) {
+        if (userId == null) {
+            throw new CustomException(ErrorCode.UNAUTHORIZED);
+        }
+        ChatRoom room = getRoomAndValidate(roomId, userId);
+
+        ChatMessage saved = chatMessageRepository.save(
+                ChatMessage.builder()
+                        .chatRoom(room)
+                        .sender(userRepository.getReferenceById(userId))
+                        .type(MessageType.TEXT)
+                        .content(content)
+                        .build());
+
+        return ChatMessageResponse.from(saved);
+    }
+
+    // ── private 헬퍼 ────────────────────────────────────────────────
+
+    // id 기반 커서 페이징. before가 null이면 최신 size개, 있으면 그보다 과거 size개(모두 최신순).
+    private List<ChatMessageResponse> fetchMessages(Long roomId, Long before, int size) {
+        Pageable pageable = PageRequest.of(0, size);
+        List<ChatMessage> messages = (before == null)
+                ? chatMessageRepository.findByChatRoomIdOrderByIdDesc(roomId, pageable)
+                : chatMessageRepository.findByChatRoomIdAndIdLessThanOrderByIdDesc(roomId, before, pageable);
+        return messages.stream().map(ChatMessageResponse::from).toList();
+    }
+
+    private ChatRoom getRoomAndValidate(Long roomId, Long userId) {
+        ChatRoom room = chatRoomRepository.findById(roomId)
+                .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND));
+        validateParticipant(room, userId);
+        return room;
+    }
+
+    // 교환 당사자(A/B 게시글 작성자)만 접근 허용. 그 외에는 403.
+    private void validateParticipant(ChatRoom room, Long userId) {
+        Exchange exchange = room.getExchange();
+        boolean isParticipant =
+                exchange.getPostA().getUser().getId().equals(userId)
+                        || exchange.getPostB().getUser().getId().equals(userId);
+        if (!isParticipant) {
+            throw new CustomException(ErrorCode.FORBIDDEN);
+        }
     }
 }
