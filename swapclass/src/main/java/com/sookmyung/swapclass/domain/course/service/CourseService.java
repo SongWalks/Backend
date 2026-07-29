@@ -1,5 +1,6 @@
 package com.sookmyung.swapclass.domain.course.service;
 
+import com.sookmyung.swapclass.domain.course.dto.response.FilterOptionResponse;
 import com.sookmyung.swapclass.domain.course.dto.response.LectureResponse;
 import com.sookmyung.swapclass.domain.course.repository.CourseRepository;
 import com.sookmyung.swapclass.domain.graduation.repository.GraduationCourseRepository;
@@ -11,6 +12,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Set;
@@ -42,5 +44,18 @@ public class CourseService {
                 .map(course -> LectureResponse.from(course, myCourseIds.contains(course.getId())));
 
         return PageResponse.from(result);
+    }
+
+    // [필터 옵션] 학과/영역 드롭다운. 학과전공(department) + 교양 영역(area)을 type 태그와 함께 통합 반환.
+    public List<FilterOptionResponse> getDepartmentAreaOptions() {
+        List<FilterOptionResponse> options = new ArrayList<>();
+        courseRepository.findDistinctDepartments().forEach(d -> options.add(FilterOptionResponse.department(d)));
+        courseRepository.findDistinctAreas().forEach(a -> options.add(FilterOptionResponse.area(a)));
+        return options;
+    }
+
+    // [필터 옵션] 강의 종류(전선·전필·교선 등) 드롭다운.
+    public List<String> getCategoryOptions() {
+        return courseRepository.findDistinctCategories();
     }
 }

@@ -8,8 +8,32 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 import java.util.Collection;
+import java.util.List;
 
 public interface CourseRepository extends JpaRepository<Course, Long> {
+
+    // [필터 옵션] 학과/영역 드롭다운용. null·빈 문자열 제외, 가나다순.
+    @Query("""
+            select distinct c.department from Course c
+            where c.department is not null and c.department <> ''
+            order by c.department asc
+            """)
+    List<String> findDistinctDepartments();
+
+    @Query("""
+            select distinct c.area from Course c
+            where c.area is not null and c.area <> ''
+            order by c.area asc
+            """)
+    List<String> findDistinctAreas();
+
+    // [필터 옵션] 강의 종류(전선·전필·교선 등) 드롭다운용.
+    @Query("""
+            select distinct c.category from Course c
+            where c.category is not null and c.category <> ''
+            order by c.category asc
+            """)
+    List<String> findDistinctCategories();
 
     // [강의 검색/목록] keyword(강의명) · department · category · area · graduationOnly 선택 필터 + 페이지네이션.
     // 정렬: 내가 등록한 졸업요건 과목(myCourseIds)을 상단(0)으로, 그 안에서 강의명 오름차순.
