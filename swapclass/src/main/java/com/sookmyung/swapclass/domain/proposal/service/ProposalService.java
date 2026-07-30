@@ -186,14 +186,19 @@ public class ProposalService {
 
     // ─── 보낸 제안 조회 ──────────────────────────────────────
     // 동시에 최대 1개 → 가장 최근 보낸 요청 1건. 없으면 null. ACCEPTED면 chatRoomId 포함.
+    // 상대(수신자) 게시글 정보 + 그 게시글이 받은 요청 수 포함.
     // matchRank는 발신자 관점: 상대 버릴 과목이 걸리는 '내(발신자) 희망 순위'.
     public ProposalSummaryResponse getSentProposal(Long userId) {
         return proposalRepository.findFirstBySenderIdOrderByCreatedAtDesc(userId)
-                .map(proposal -> ProposalSummaryResponse.of(
-                        proposal,
-                        matchRankFor(proposal.getSenderPost(),
-                                proposal.getReceiverPost().getDiscardCourse().getId()),
-                        resolveChatRoomId(proposal)))
+                .map(proposal -> {
+                    Post counterpart = proposal.getReceiverPost();
+                    Integer matchRank = matchRankFor(
+                            proposal.getSenderPost(), counterpart.getDiscardCourse().getId());
+                    long receivedCount = proposalRepository
+                            .countByReceiverPostIdAndStatus(counterpart.getId(), ProposalStatus.PENDING);
+                    return ProposalSummaryResponse.of(
+                            proposal, counterpart, matchRank, resolveChatRoomId(proposal), receivedCount);
+                })
                 .orElse(null);
     }
 
@@ -209,16 +214,19 @@ public class ProposalService {
     }
 
     // ─── 받은 제안 목록 조회 ─────────────────────────────────
-    // 내 게시글에 들어온 대기 중 요청, 만료 임박순. matchRank는 내 희망 순위 기준.
+    // 내 게시글에 들어온 대기 중 요청, 만료 임박순.
+    // 상대(발신자) 게시글 정보 + 내 게시글이 받은 요청 수 포함. matchRank는 내(수신자) 희망 순위 기준.
     public List<ProposalSummaryResponse> getReceivedProposals(Long userId) {
         return proposalRepository
                 .findByReceiverIdAndStatusOrderByExpiresAtAsc(userId, ProposalStatus.PENDING)
                 .stream()
                 .map(proposal -> {
+                    Post counterpart = proposal.getSenderPost();
                     Integer matchRank = matchRankFor(
-                            proposal.getReceiverPost(),
-                            proposal.getSenderPost().getDiscardCourse().getId());
-                    return ProposalSummaryResponse.of(proposal, matchRank, null);
+                            proposal.getReceiverPost(), counterpart.getDiscardCourse().getId());
+                    long receivedCount = proposalRepository.countByReceiverPostIdAndStatus(
+                            proposal.getReceiverPost().getId(), ProposalStatus.PENDING);
+                    return ProposalSummaryResponse.of(proposal, counterpart, matchRank, null, receivedCount);
                 })
                 .toList();
     }
