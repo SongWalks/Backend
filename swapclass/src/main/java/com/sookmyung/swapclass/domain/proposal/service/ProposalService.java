@@ -186,9 +186,14 @@ public class ProposalService {
 
     // ─── 보낸 제안 조회 ──────────────────────────────────────
     // 동시에 최대 1개 → 가장 최근 보낸 요청 1건. 없으면 null. ACCEPTED면 chatRoomId 포함.
+    // matchRank는 발신자 관점: 상대 버릴 과목이 걸리는 '내(발신자) 희망 순위'.
     public ProposalSummaryResponse getSentProposal(Long userId) {
         return proposalRepository.findFirstBySenderIdOrderByCreatedAtDesc(userId)
-                .map(proposal -> ProposalSummaryResponse.of(proposal, null, resolveChatRoomId(proposal)))
+                .map(proposal -> ProposalSummaryResponse.of(
+                        proposal,
+                        matchRankFor(proposal.getSenderPost(),
+                                proposal.getReceiverPost().getDiscardCourse().getId()),
+                        resolveChatRoomId(proposal)))
                 .orElse(null);
     }
 
