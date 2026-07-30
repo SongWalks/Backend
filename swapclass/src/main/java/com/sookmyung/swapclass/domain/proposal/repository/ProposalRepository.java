@@ -31,4 +31,7 @@ public interface ProposalRepository extends JpaRepository<Proposal, Long> {
 
     // 특정 게시글에 들어온 특정 상태의 요청 목록 (수락 시 나머지 일괄 거절용)
     List<Proposal> findByReceiverPostIdAndStatus(Long receiverPostId, ProposalStatus status);
+
+    // 특정 게시글이 받은 특정 상태의 요청 수 (요청함 '받은 요청 개수'용)
+    long countByReceiverPostIdAndStatus(Long receiverPostId, ProposalStatus status);
 }
