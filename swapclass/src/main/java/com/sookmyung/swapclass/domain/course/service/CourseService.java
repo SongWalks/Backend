@@ -22,26 +22,26 @@ import java.util.Set;
 @Transactional(readOnly = true)
 public class CourseService {
 
-    // myCourseIds 가 비었을 때 JPQL IN 제약 회피용 sentinel (course id 는 양수라 매칭되지 않음)
-    private static final Collection<Long> EMPTY_SENTINEL = List.of(-1L);
+    // myCodes 가 비었을 때 JPQL IN 제약 회피용 sentinel (실제 학수번호와 겹치지 않는 값)
+    private static final Collection<String> EMPTY_SENTINEL = List.of("__NONE__");
 
     private final CourseRepository courseRepository;
     private final GraduationCourseRepository graduationCourseRepository;
 
     // 강의 검색/목록 (모든 필터 선택) + 페이지네이션.
-    // 내가 졸업요건으로 등록한 과목은 (필터 통과 시) 상단으로, myGraduationCourse=true 로 표시.
+    // 내 졸업요건 과목과 같은 학수번호(code)를 가진 과목은 (다른 분반 포함) 상단으로, myGraduationCourse=true 로 표시.
     public PageResponse<LectureResponse> searchLectures(Long userId, String keyword, String department,
                                                         String category, String area,
                                                         boolean graduationOnly, int page, int size) {
         Pageable pageable = PageRequest.of(page, size);
 
-        // 내 졸업요건 course id 집합 (플래그 판정용). 쿼리에는 비어있지 않은 컬렉션을 넘김.
-        Set<Long> myCourseIds = Set.copyOf(graduationCourseRepository.findCourseIdsByUserId(userId));
-        Collection<Long> queryIds = myCourseIds.isEmpty() ? EMPTY_SENTINEL : myCourseIds;
+        // 내 졸업요건 학수번호 집합 (플래그 판정용). 쿼리에는 비어있지 않은 컬렉션을 넘김.
+        Set<String> myCodes = Set.copyOf(graduationCourseRepository.findCourseCodesByUserId(userId));
+        Collection<String> queryCodes = myCodes.isEmpty() ? EMPTY_SENTINEL : myCodes;
 
         Page<LectureResponse> result = courseRepository
-                .searchLectures(keyword, department, category, area, graduationOnly, queryIds, pageable)
-                .map(course -> LectureResponse.from(course, myCourseIds.contains(course.getId())));
+                .searchLectures(keyword, department, category, area, graduationOnly, queryCodes, pageable)
+                .map(course -> LectureResponse.from(course, course.getCode() != null && myCodes.contains(course.getCode())));
 
         return PageResponse.from(result);
     }

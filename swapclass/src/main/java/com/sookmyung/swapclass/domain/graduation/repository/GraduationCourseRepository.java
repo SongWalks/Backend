@@ -23,6 +23,12 @@ public interface GraduationCourseRepository extends JpaRepository<GraduationCour
     @Query("select g.course.id from GraduationCourse g where g.user.id = :userId")
     List<Long> findCourseIdsByUserId(@Param("userId") Long userId);
 
+    // 내 졸업요건으로 등록된 과목의 학수번호(code) 목록.
+    // 같은 학수번호의 다른 분반도 졸업요건으로 취급해 상단 노출하기 위함. null·빈 값 제외.
+    @Query("select distinct g.course.code from GraduationCourse g " +
+            "where g.user.id = :userId and g.course.code is not null and g.course.code <> ''")
+    List<String> findCourseCodesByUserId(@Param("userId") Long userId);
+
     // 과목명 검색 (q) — 최신순
     @Query("select g from GraduationCourse g join g.course c " +
             "where g.user.id = :userId and c.name like %:keyword% " +
