@@ -6,6 +6,7 @@ import com.sookmyung.swapclass.global.jwt.JwtTokenProvider;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
@@ -45,6 +46,17 @@ public class SecurityConfig {
                         session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 // 경로별 접근 권한
                 .authorizeHttpRequests(auth -> auth
+                        // 유저별 게시글 조회는 인증 필요 (아래 공개 GET 규칙보다 먼저 선언해야 /api/posts/* 에 안 걸림)
+                        .requestMatchers(HttpMethod.GET,
+                                "/api/posts/me",
+                                "/api/posts/my-seekers",
+                                "/api/posts/my-targets"
+                        ).authenticated()
+                        // 게시글 목록/상세는 비로그인 조회 허용 (GET만)
+                        .requestMatchers(HttpMethod.GET,
+                                "/api/posts",
+                                "/api/posts/*"
+                        ).permitAll()
                         // 토큰 없이 접근 가능한 공개 경로(회원가입/로그인/인증/재발급/테스트)
                         .requestMatchers(
                                 "/api/auth/email/code",

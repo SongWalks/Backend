@@ -16,16 +16,17 @@ import java.util.List;
 public interface PostRepository extends JpaRepository<Post, Long> {
 
     // [피드] 특정 상태(MATCHABLE) · 본인 글 제외 · 차단 유저 양방향 제외 · 학과 필터(선택) · 최신순 페이징
+    // 비로그인(userId == null) 시 본인 제외·차단 필터를 건너뛰고 전체 공개 글을 노출
     @Query("""
         select p from Post p
         where p.status = :status
-          and p.user.id <> :userId
-          and p.user.id not in (
+          and (:userId is null or p.user.id <> :userId)
+          and (:userId is null or p.user.id not in (
               select b.blocked.id from UserBlock b where b.blocker.id = :userId
-          )
-          and p.user.id not in (
+          ))
+          and (:userId is null or p.user.id not in (
               select b.blocker.id from UserBlock b where b.blocked.id = :userId
-          )
+          ))
           and (:dept is null or p.discardCourse.department = :dept)
         order by p.createdAt desc
         """)
