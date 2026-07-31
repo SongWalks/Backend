@@ -7,6 +7,7 @@ public record GraduationCourseResponse(
         Long id,
         Long courseId,
         String courseName,
+        String courseType,
         boolean completed
 ) {
     public static GraduationCourseResponse from(GraduationCourse graduationCourse) {
@@ -14,6 +15,7 @@ public record GraduationCourseResponse(
                 graduationCourse.getId(),
                 graduationCourse.getCourse().getId(),
                 graduationCourse.getCourse().getName(),
+                graduationCourse.getCourse().getCourseType(),
                 graduationCourse.isCompleted()
         );
     }
