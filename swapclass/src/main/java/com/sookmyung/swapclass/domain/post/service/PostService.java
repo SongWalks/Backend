@@ -14,6 +14,9 @@ import com.sookmyung.swapclass.domain.post.entity.PostStatus;
 import com.sookmyung.swapclass.domain.post.entity.PostWantedCourse;
 import com.sookmyung.swapclass.domain.post.repository.PostRepository;
 import com.sookmyung.swapclass.domain.post.repository.PostWantedCourseRepository;
+import com.sookmyung.swapclass.domain.proposal.entity.ProposalStatus;
+import com.sookmyung.swapclass.domain.proposal.repository.PostProposalCount;
+import com.sookmyung.swapclass.domain.proposal.repository.ProposalRepository;
 import com.sookmyung.swapclass.domain.user.entity.User;
 import com.sookmyung.swapclass.domain.user.repository.UserRepository;
 import com.sookmyung.swapclass.global.exception.CustomException;
@@ -29,7 +32,9 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -40,6 +45,7 @@ public class PostService {
     private final PostWantedCourseRepository postWantedCourseRepository;
     private final CourseRepository courseRepository;
     private final UserRepository userRepository;
+    private final ProposalRepository proposalRepository;
 
     // 게시글 작성
     @Transactional
@@ -94,9 +100,17 @@ public class PostService {
     // 게시글 피드 (매칭 전, 본인 글 제외, 학과 필터(선택), 최신순, 오프셋 페이징)
     public PageResponse<PostFeedResponse> getFeed(Long userId, String dept, int page, int size) {
         Pageable pageable = PageRequest.of(page, size);
-        Page<PostFeedResponse> feed = postRepository
-                .findFeed(PostStatus.MATCHABLE, userId, dept, pageable)
-                .map(PostFeedResponse::from);
+        Page<Post> posts = postRepository.findFeed(PostStatus.MATCHABLE, userId, dept, pageable);
+
+        // 페이지에 포함된 게시글들의 '받은 PENDING 제안 수'를 한 번에 집계 (N+1 방지)
+        List<Long> postIds = posts.getContent().stream().map(Post::getId).toList();
+        Map<Long, Long> proposalCounts = postIds.isEmpty()
+                ? Map.of()
+                : proposalRepository.countByReceiverPostIds(postIds, ProposalStatus.PENDING).stream()
+                        .collect(Collectors.toMap(PostProposalCount::getPostId, PostProposalCount::getCount));
+
+        Page<PostFeedResponse> feed = posts.map(post ->
+                PostFeedResponse.from(post, proposalCounts.getOrDefault(post.getId(), 0L)));
         return PageResponse.from(feed);
     }
 

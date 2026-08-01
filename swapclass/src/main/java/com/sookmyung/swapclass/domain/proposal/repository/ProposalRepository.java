@@ -3,6 +3,8 @@ package com.sookmyung.swapclass.domain.proposal.repository;
 import com.sookmyung.swapclass.domain.proposal.entity.Proposal;
 import com.sookmyung.swapclass.domain.proposal.entity.ProposalStatus;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -34,4 +36,14 @@ public interface ProposalRepository extends JpaRepository<Proposal, Long> {
 
     // 특정 게시글이 받은 특정 상태의 요청 수 (요청함 '받은 요청 개수'용)
     long countByReceiverPostIdAndStatus(Long receiverPostId, ProposalStatus status);
+
+    // 여러 게시글이 받은 특정 상태의 요청 수 일괄 집계 (피드 proposalCount N+1 방지)
+    @Query("""
+            select p.receiverPost.id as postId, count(p) as count
+            from Proposal p
+            where p.receiverPost.id in :postIds and p.status = :status
+            group by p.receiverPost.id
+            """)
+    List<PostProposalCount> countByReceiverPostIds(@Param("postIds") List<Long> postIds,
+                                                   @Param("status") ProposalStatus status);
 }
