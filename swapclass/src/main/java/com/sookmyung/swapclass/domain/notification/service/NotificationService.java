@@ -69,13 +69,14 @@ public class NotificationService {
     @Transactional
     public void sendAutoMatchProposalNotification(User user, String courseName, int priority, Long postId) {
         createNotification(
-            user,
-            NotificationType.MATCH_PROPOSAL,
-            "매칭 제안",
-            courseName + "의 " + priority + "순위 과목을 찾았습니다! 교환을 제안해보세요!",
-            postId
+                user,
+                NotificationType.MATCH_PROPOSAL,
+                courseName,  // ← 버릴 과목명을 title로
+                "🎉 " + courseName + " 의 " + priority + "순위 과목을 찾았습니다! 교환을 제안해보세요!",
+                postId
         );
     }
+
 
     // 교환 요청 수신 알림
     @Transactional
@@ -139,15 +140,16 @@ public class NotificationService {
 
     // ─── 교환 일정 알림 ───────────────────────────────────────
 
+
     // 교환 시간 확정 알림
     @Transactional
     public void sendExchangeScheduledNotification(User user, String scheduledTime, Long chatRoomId) {
         createNotification(
-            user,
-            NotificationType.EXCHANGE_SCHEDULED,
-            "교환 시간 확정",
-            scheduledTime + "으로 교환 시간이 확정되었습니다.",
-            chatRoomId
+                user,
+                NotificationType.EXCHANGE_SCHEDULED,
+                "교환 시간 확정",
+                scheduledTime + "으로 교환 시간이 확정되었습니다. 해당 시간에 카카오톡 오픈채팅방 링크가 열립니다.",
+                chatRoomId
         );
     }
 
