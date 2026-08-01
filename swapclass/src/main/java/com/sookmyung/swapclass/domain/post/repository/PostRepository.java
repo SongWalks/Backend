@@ -70,74 +70,14 @@ public interface PostRepository extends JpaRepository<Post, Long> {
     @Query("select p.discardCourse.id from Post p where p.user.id = :userId and p.status = :status")
     List<Long> findMyGiveCourseIds(@Param("userId") Long userId, @Param("status") PostStatus status);
 
-    // [홈 추천 피드] 양방향 교집합. 후보글 p가 추천되려면 내 게시글 m 중
-    //  (상대 버릴 과목 ∈ 내 원하는 과목) AND (내 버릴 과목 ∈ 상대 원하는 과목) 인 쌍이 하나라도 존재해야 함.
-    //  본인 글 제외 · 차단 유저 양방향 제외 · 이미 거절/무산된 쌍(MatchIgnore) 제외 · 최신순 페이징.
-    @Query(value = """
-        select p from Post p
-        where p.status = :status
-          and p.user.id <> :userId
-          and p.user.id not in (
-              select b.blocked.id from UserBlock b where b.blocker.id = :userId
-          )
-          and p.user.id not in (
-              select b.blocker.id from UserBlock b where b.blocked.id = :userId
-          )
-          and exists (
-              select 1 from Post m
-              where m.user.id = :userId
-                and m.status = :status
-                and m.discardCourse.id in (
-                    select pw.course.id from PostWantedCourse pw where pw.post = p
-                )
-                and p.discardCourse.id in (
-                    select mw.course.id from PostWantedCourse mw where mw.post = m
-                )
-                and not exists (
-                    select 1 from MatchIgnore mi
-                    where (mi.postA.id = m.id and mi.postB.id = p.id)
-                       or (mi.postA.id = p.id and mi.postB.id = m.id)
-                )
-          )
-        order by p.createdAt desc
-        """,
-        countQuery = """
-        select count(p) from Post p
-        where p.status = :status
-          and p.user.id <> :userId
-          and p.user.id not in (
-              select b.blocked.id from UserBlock b where b.blocker.id = :userId
-          )
-          and p.user.id not in (
-              select b.blocker.id from UserBlock b where b.blocked.id = :userId
-          )
-          and exists (
-              select 1 from Post m
-              where m.user.id = :userId
-                and m.status = :status
-                and m.discardCourse.id in (
-                    select pw.course.id from PostWantedCourse pw where pw.post = p
-                )
-                and p.discardCourse.id in (
-                    select mw.course.id from PostWantedCourse mw where mw.post = m
-                )
-                and not exists (
-                    select 1 from MatchIgnore mi
-                    where (mi.postA.id = m.id and mi.postB.id = p.id)
-                       or (mi.postA.id = p.id and mi.postB.id = m.id)
-                )
-          )
-        """)
-    Page<Post> findRecommendedFeed(@Param("status") PostStatus status,
-                                   @Param("userId") Long userId,
-                                   Pageable pageable);
     // [추천 매칭] 내 게시글 A(aPostId, aDiscardCourseId) 기준 양방향 매칭 후보 조회.
     //  - B.버릴과목 ∈ A.원하는과목  → 매칭순위(aw.priority)
     //  - A.버릴과목 ∈ B.원하는과목  → 양방향 성립
     //  - 제외: 본인 글 / 비MATCHABLE / 차단(양방향) / match_ignores 동일 쌍
+    //  - senderPostId(aw.post.id = A) 를 함께 담아 원클릭 제안에 사용
     @Query("""
             select new com.sookmyung.swapclass.domain.match.dto.MatchCandidateDto(
-                       b.id, aw.priority, b.createdAt)
+                       b.id, aw.post.id, aw.priority, b.createdAt)
             from Post b
             join PostWantedCourse aw
               on aw.post.id = :aPostId and aw.course.id = b.discardCourse.id
