@@ -267,6 +267,8 @@ public class ProposalService {
     }
 
     // ─── 제안 가능한 내 게시글 조회 ───────────────────────────
+    // 각 내 게시글의 버릴/원하는 과목 + matchRank(내가 상대 과목을 원하는 순위, 기존 의미)
+    //  + partnerWantRank(상대가 내 과목을 원하는 순위, 화면 문구용) + 이미 요청했는지.
     public List<CandidatePostResponse> getCandidates(Long userId, Long targetPostId) {
         Post targetPost = getPostOrThrow(targetPostId);
         Long targetDiscardCourseId = targetPost.getDiscardCourse().getId();
@@ -276,11 +278,14 @@ public class ProposalService {
 
         return myPosts.stream()
                 .map(myPost -> {
+                    // 기존 의미 유지: 내 희망목록에서 상대 버릴 과목의 순위
                     Integer matchRank = matchRankFor(myPost, targetDiscardCourseId);
+                    // 화면 문구("상대방의 교환 희망 N순위"): 상대 희망목록에서 내 버릴 과목의 순위
+                    Integer partnerWantRank = matchRankFor(targetPost, myPost.getDiscardCourse().getId());
                     boolean alreadyRequested = proposalRepository
                             .existsBySenderPostIdAndReceiverPostIdAndStatus(
                                     myPost.getId(), targetPostId, ProposalStatus.PENDING);
-                    return new CandidatePostResponse(myPost.getId(), matchRank, alreadyRequested);
+                    return CandidatePostResponse.of(myPost, matchRank, partnerWantRank, alreadyRequested);
                 })
                 .toList();
     }

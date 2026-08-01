@@ -3,10 +3,13 @@ package com.sookmyung.swapclass.domain.match.service;
 import com.sookmyung.swapclass.domain.match.dto.MatchCandidateDto;
 import com.sookmyung.swapclass.domain.match.dto.response.RecommendationResponse;
 import com.sookmyung.swapclass.domain.match.dto.response.RecommendedPostResponse;
+import com.sookmyung.swapclass.domain.post.dto.response.CourseSummaryResponse;
+import com.sookmyung.swapclass.domain.post.dto.response.PostFeedResponse;
 import com.sookmyung.swapclass.domain.post.entity.Post;
 import com.sookmyung.swapclass.domain.post.entity.PostStatus;
 import com.sookmyung.swapclass.domain.post.repository.PostRepository;
 import com.sookmyung.swapclass.domain.proposal.entity.ProposalStatus;
+import com.sookmyung.swapclass.domain.proposal.repository.PostProposalCount;
 import com.sookmyung.swapclass.domain.proposal.repository.ProposalRepository;
 import com.sookmyung.swapclass.global.exception.CustomException;
 import com.sookmyung.swapclass.global.exception.ErrorCode;
@@ -18,6 +21,9 @@ import java.util.Comparator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 /**
  * 추천 매칭 서비스. 내 MATCHABLE 게시글(들)의 희망 과목 기준 양방향 교환 후보를 추천한다.
@@ -66,11 +72,49 @@ public class MatchService {
                 .map(proposal -> proposal.getReceiverPost().getId())
                 .orElse(null);
 
+        // 카드 렌더용 상대 글(과목 정보) + 받은 제안 수를 일괄 로드 (N+1 방지)
+        List<Long> candidatePostIds = pageContent.stream().map(MatchCandidateDto::postId).toList();
+        Map<Long, Post> postById = candidatePostIds.isEmpty()
+                ? Map.of()
+                : postRepository.findAllById(candidatePostIds).stream()
+                        .collect(Collectors.toMap(Post::getId, Function.identity()));
+        Map<Long, Long> proposalCounts = candidatePostIds.isEmpty()
+                ? Map.of()
+                : proposalRepository.countByReceiverPostIds(candidatePostIds, ProposalStatus.PENDING).stream()
+                        .collect(Collectors.toMap(PostProposalCount::getPostId, PostProposalCount::getCount));
+
+        // 카드의 "내가 줄 과목"(senderPost 버릴 과목)용으로 내 매칭 게시글도 일괄 로드
+        List<Long> senderPostIds = pageContent.stream()
+                .map(MatchCandidateDto::senderPostId)
+                .filter(Objects::nonNull)
+                .distinct()
+                .toList();
+        Map<Long, Post> senderPostById = senderPostIds.isEmpty()
+                ? Map.of()
+                : postRepository.findAllById(senderPostIds).stream()
+                        .collect(Collectors.toMap(Post::getId, Function.identity()));
+
         List<RecommendedPostResponse> posts = pageContent.stream()
-                .map(candidate -> new RecommendedPostResponse(
-                        candidate.postId(),
-                        candidate.matchRank(),
-                        candidate.postId().equals(pendingReceiverPostId) ? REQUEST_STATUS_PENDING : null))
+                .map(candidate -> {
+                    Post post = postById.get(candidate.postId());
+                    PostFeedResponse card = PostFeedResponse.from(
+                            post, proposalCounts.getOrDefault(candidate.postId(), 0L));
+                    Post senderPost = senderPostById.get(candidate.senderPostId());
+                    CourseSummaryResponse myDiscardCourse = senderPost == null
+                            ? null
+                            : CourseSummaryResponse.from(senderPost.getDiscardCourse());
+                    String requestStatus = candidate.postId().equals(pendingReceiverPostId)
+                            ? REQUEST_STATUS_PENDING : null;
+                    return new RecommendedPostResponse(
+                            card.postId(),
+                            card.discardCourse(),
+                            card.wantedCourses(),
+                            candidate.senderPostId(),
+                            myDiscardCourse,
+                            card.proposalCount(),
+                            candidate.matchRank(),
+                            requestStatus);
+                })
                 .toList();
 
         return new RecommendationResponse(posts, hasNext);
