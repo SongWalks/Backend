@@ -17,7 +17,13 @@ public record PostFeedResponse(
         int proposalCount,
         LocalDateTime createdAt
 ) {
+    // proposalCount 미지정 시 0. (추천 피드 등 제안 수가 불필요한 경우)
     public static PostFeedResponse from(Post post) {
+        return from(post, 0L);
+    }
+
+    // 받은 제안 수(proposalCount)를 함께 담는다.
+    public static PostFeedResponse from(Post post, long proposalCount) {
         List<WantedCourseResponse> wanted = post.getWantedCourses().stream()
                 .sorted(Comparator.comparingInt(PostWantedCourse::getPriority))
                 .map(WantedCourseResponse::from)
@@ -27,7 +33,7 @@ public record PostFeedResponse(
                 post.getId(),
                 CourseSummaryResponse.from(post.getDiscardCourse()),
                 wanted,
-                0, // TODO: Proposal 도메인 생기면 실제 받은 제안 횟수로 교체
+                (int) proposalCount,
                 post.getCreatedAt()
         );
     }
