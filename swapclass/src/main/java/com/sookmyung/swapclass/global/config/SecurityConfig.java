@@ -65,6 +65,9 @@ public class SecurityConfig {
                                 "/api/auth/signup",
                                 "/api/auth/login",
                                 "/api/auth/token/refresh",
+                                // 비밀번호 재설정(로그인 전 사용자도 호출 가능해야 함)
+                                "/api/auth/password/email/code",
+                                "/api/auth/password/reset",
                                 // 홈화면 통합 조회(비로그인 둘러보기 허용, 인증 optional)
                                 "/api/home",
                                 "/api/test/**",
