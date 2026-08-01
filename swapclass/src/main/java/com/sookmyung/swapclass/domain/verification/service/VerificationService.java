@@ -22,6 +22,8 @@ import java.io.IOException;
 import java.time.LocalDateTime;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
+import com.sookmyung.swapclass.domain.chat.repository.ChatRoomRepository;
+import com.sookmyung.swapclass.domain.chat.entity.ChatRoomStatus;
 
 @Service
 @RequiredArgsConstructor
@@ -33,6 +35,7 @@ public class VerificationService {
     private final QrService qrService;
     private final S3Service s3Service;
     private final RedisTemplate<String, String> redisTemplate;
+    private final ChatRoomRepository chatRoomRepository;
 
     private static final String QR_TOKEN_PREFIX = "qr:token:";
     private static final long QR_EXPIRE_MINUTES = 10;
@@ -107,10 +110,15 @@ public class VerificationService {
         long passedCount = verificationLogRepository
                 .countByExchangeIdAndStatusAndVerifyType(exchangeId, VerifyStatus.PASSED, VerifyType.PRE);
 
-        String message = qrValid ? "인증이 완료되었습니다." : "QR 코드를 확인할 수 없습니다.";
-        if (qrValid && passedCount >= 2) {
+        String message;
+        if (!qrValid) {
+            message = "인증 QR 코드를 확인할 수 없습니다.\n수강신청(1학년) 페이지의 인증 QR 코드가 한 화면에 모두 보이도록 한 뒤 다시 인증을 진행해주세요.";
+        } else if (passedCount >= 2) {
             message = "양측 인증 완료! 카운트다운을 시작합니다.";
-            // TODO: 채팅방 상태 → COUNTDOWN (chat_rooms 테이블 머지 후 구현)
+            chatRoomRepository.findByExchangeId(exchangeId)
+                    .ifPresent(chatRoom -> chatRoom.changeStatus(ChatRoomStatus.COUNTDOWN));
+        } else {
+            message = "인증이 완료되었습니다.";  // ← 한쪽만 인증 완료된 경우
         }
 
         return new VerifyUploadResponse(qrValid, qrValid ? "PASSED" : "FAILED", message);
