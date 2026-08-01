@@ -136,9 +136,7 @@ public class PostService {
                 ? postRepository.findByUserIdAndStatusNotOrderByCreatedAtDesc(userId, PostStatus.DELETED)
                 : postRepository.findByUserIdAndStatusOrderByCreatedAtDesc(userId, status);
 
-        return posts.stream()
-                .map(MyPostResponse::from)
-                .toList();
+        return toMyPostResponses(posts);
     }
 
     // [퀵필터] 내 버릴 과목을 want 로 찾는 타 유저 글 (my-seekers)
@@ -149,9 +147,8 @@ public class PostService {
             throw new CustomException(ErrorCode.POST_NOT_REGISTERED);
         }
 
-        return postRepository.findMySeekers(PostStatus.MATCHABLE, userId, giveCourseIds).stream()
-                .map(MyPostResponse::from)
-                .toList();
+        return toMyPostResponses(
+                postRepository.findMySeekers(PostStatus.MATCHABLE, userId, giveCourseIds));
     }
 
     // [퀵필터] 내가 원하는(want) 과목을 give 로 올린 타 유저 글 (my-targets)
@@ -162,8 +159,20 @@ public class PostService {
             throw new CustomException(ErrorCode.POST_NOT_REGISTERED);
         }
 
-        return postRepository.findMyTargets(PostStatus.MATCHABLE, userId, wantCourseIds).stream()
-                .map(MyPostResponse::from)
+        return toMyPostResponses(
+                postRepository.findMyTargets(PostStatus.MATCHABLE, userId, wantCourseIds));
+    }
+
+    // 게시글 목록 → MyPostResponse 변환. 각 글이 받은 PENDING 제안 수를 한 번에 집계(N+1 방지)해 함께 담는다.
+    private List<MyPostResponse> toMyPostResponses(List<Post> posts) {
+        List<Long> postIds = posts.stream().map(Post::getId).toList();
+        Map<Long, Long> proposalCounts = postIds.isEmpty()
+                ? Map.of()
+                : proposalRepository.countByReceiverPostIds(postIds, ProposalStatus.PENDING).stream()
+                        .collect(Collectors.toMap(PostProposalCount::getPostId, PostProposalCount::getCount));
+
+        return posts.stream()
+                .map(post -> MyPostResponse.from(post, proposalCounts.getOrDefault(post.getId(), 0L)))
                 .toList();
     }
 
