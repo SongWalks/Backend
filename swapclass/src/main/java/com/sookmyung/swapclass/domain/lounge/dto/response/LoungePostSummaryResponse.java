@@ -13,11 +13,12 @@ public record LoungePostSummaryResponse(
         String courseName,
         String title,
         String content,
+        boolean mine,   // 요청자가 작성한 글인지 (삭제 버튼 노출용)
         int likeCount,
         int commentCount,
         LocalDateTime createdAt
 ) {
-    public static LoungePostSummaryResponse from(LoungePost post) {
+    public static LoungePostSummaryResponse from(LoungePost post, Long currentUserId) {
         return new LoungePostSummaryResponse(
                 post.getId(),
                 post.getType(),
@@ -25,6 +26,7 @@ public record LoungePostSummaryResponse(
                 post.getCourse().getName(),
                 post.getTitle(),
                 post.getContent(),
+                currentUserId != null && post.isAuthor(currentUserId),
                 post.getLikeCount(),
                 post.getCommentCount(),
                 post.getCreatedAt()

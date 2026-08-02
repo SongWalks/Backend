@@ -30,10 +30,11 @@ public class LoungePostController {
     // [목록 조회] 유형/과목태그/검색어 필터 (모두 선택), 최신순
     @GetMapping
     public ApiResponse<LoungePostListResponse> getList(
+            @AuthenticationPrincipal Long userId,
             @RequestParam(required = false) LoungePostType type,
             @RequestParam(required = false) Long courseId,
             @RequestParam(required = false) String keyword) {
-        return ApiResponse.success(loungePostService.getList(type, courseId, keyword));
+        return ApiResponse.success(loungePostService.getList(type, courseId, keyword, userId));
     }
 
     // [작성]

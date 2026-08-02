@@ -55,8 +55,8 @@ public class LoungePostService {
     }
 
     // [목록] GET /api/lounge/posts — 유형/과목태그/검색어 필터, 최신순
-    public LoungePostListResponse getList(LoungePostType type, Long courseId, String keyword) {
-        return LoungePostListResponse.from(postRepository.search(type, courseId, normalize(keyword)));
+    public LoungePostListResponse getList(LoungePostType type, Long courseId, String keyword, Long userId) {
+        return LoungePostListResponse.from(postRepository.search(type, courseId, normalize(keyword)), userId);
     }
 
     // [상세] GET /api/lounge/posts/{postId}
@@ -73,7 +73,7 @@ public class LoungePostService {
             bookmarked = bookmarkRepository.existsByPostAndUser(post, user);
         }
 
-        return LoungePostDetailResponse.of(post, liked, bookmarked, comments);
+        return LoungePostDetailResponse.of(post, liked, bookmarked, comments, userId);
     }
 
     // [수정] PATCH /api/lounge/posts/{postId} — 본인 글만, 과목 태그는 수정 불가
