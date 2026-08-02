@@ -15,6 +15,7 @@ public record LoungePostDetailResponse(
         String title,
         String content,
         Long authorId,
+        boolean mine,         // 요청자가 작성한 글인지 (삭제 버튼 노출용)
         int likeCount,
         int commentCount,
         boolean liked,        // 요청자가 좋아요 눌렀는지
@@ -26,7 +27,8 @@ public record LoungePostDetailResponse(
     public static LoungePostDetailResponse of(LoungePost post,
                                               boolean liked,
                                               boolean bookmarked,
-                                              List<LoungeComment> comments) {
+                                              List<LoungeComment> comments,
+                                              Long currentUserId) {
         return new LoungePostDetailResponse(
                 post.getId(),
                 post.getType(),
@@ -35,6 +37,7 @@ public record LoungePostDetailResponse(
                 post.getTitle(),
                 post.getContent(),
                 post.getUser().getId(),
+                currentUserId != null && post.isAuthor(currentUserId),
                 post.getLikeCount(),
                 post.getCommentCount(),
                 liked,
@@ -42,7 +45,7 @@ public record LoungePostDetailResponse(
                 post.getCreatedAt(),
                 post.getUpdatedAt(),
                 comments.stream()
-                        .map(LoungeCommentResponse::from)
+                        .map(comment -> LoungeCommentResponse.from(comment, currentUserId))
                         .toList()
         );
     }

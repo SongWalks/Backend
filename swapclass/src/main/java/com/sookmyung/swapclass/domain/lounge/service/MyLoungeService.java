@@ -22,7 +22,7 @@ public class MyLoungeService {
     // [내 라운지 게시글] 내가 작성한 라운지 글 목록 (최신순)
     public LoungePostListResponse getMyPosts(Long userId) {
         return LoungePostListResponse.from(
-                loungePostRepository.findByUserIdOrderByCreatedAtDesc(userId));
+                loungePostRepository.findByUserIdOrderByCreatedAtDesc(userId), userId);
     }
 
     // [북마크 목록] 내가 북마크한 라운지 글 목록 (북마크 최신순)
@@ -32,6 +32,6 @@ public class MyLoungeService {
                 .stream()
                 .map(LoungeBookmark::getPost)
                 .toList();
-        return LoungePostListResponse.from(posts);
+        return LoungePostListResponse.from(posts, userId);
     }
 }

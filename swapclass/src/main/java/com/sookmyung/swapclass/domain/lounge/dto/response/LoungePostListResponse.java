@@ -7,10 +7,10 @@ import java.util.List;
 public record LoungePostListResponse(
         List<LoungePostSummaryResponse> posts
 ) {
-    public static LoungePostListResponse from(List<LoungePost> posts) {
+    public static LoungePostListResponse from(List<LoungePost> posts, Long currentUserId) {
         return new LoungePostListResponse(
                 posts.stream()
-                        .map(LoungePostSummaryResponse::from)
+                        .map(post -> LoungePostSummaryResponse.from(post, currentUserId))
                         .toList()
         );
     }
