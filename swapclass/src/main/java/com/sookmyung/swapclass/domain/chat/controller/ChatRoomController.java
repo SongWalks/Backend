@@ -1,6 +1,7 @@
 package com.sookmyung.swapclass.domain.chat.controller;
 
 import com.sookmyung.swapclass.domain.chat.dto.response.ChatRoomDetailResponse;
+import com.sookmyung.swapclass.domain.chat.dto.response.ChatRoomSummaryResponse;
 import com.sookmyung.swapclass.domain.chat.dto.response.MessageListResponse;
 import com.sookmyung.swapclass.domain.chat.service.ChatRoomService;
 import com.sookmyung.swapclass.global.response.ApiResponse;
@@ -13,12 +14,22 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.util.List;
+
 @RestController
 @RequestMapping("/api/chat-rooms")
 @RequiredArgsConstructor
 public class ChatRoomController {
 
     private final ChatRoomService chatRoomService;
+
+    // #0 내 채팅방 목록 조회 (최근 활동순)
+    @GetMapping
+    public ResponseEntity<ApiResponse<List<ChatRoomSummaryResponse>>> getMyChatRooms(
+            @AuthenticationPrincipal Long userId) {
+        List<ChatRoomSummaryResponse> response = chatRoomService.getMyChatRooms(userId);
+        return ResponseEntity.ok(ApiResponse.success(response));
+    }
 
     // #1 채팅방 조회 (상태 + 메시지 내역, 커서 페이징)
     @GetMapping("/{roomId}")

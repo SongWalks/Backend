@@ -3,6 +3,7 @@ package com.sookmyung.swapclass.domain.chat.service;
 import com.sookmyung.swapclass.domain.chat.dto.response.ChatMessageResponse;
 import com.sookmyung.swapclass.domain.chat.dto.response.ChatRoomDetailResponse;
 import com.sookmyung.swapclass.domain.chat.dto.response.ChatRoomResponse;
+import com.sookmyung.swapclass.domain.chat.dto.response.ChatRoomSummaryResponse;
 import com.sookmyung.swapclass.domain.chat.dto.response.MessageListResponse;
 import com.sookmyung.swapclass.domain.chat.entity.ChatMessage;
 import com.sookmyung.swapclass.domain.chat.entity.ChatRoom;
@@ -18,7 +19,11 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.Comparator;
 import java.util.List;
+import java.util.Map;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -28,6 +33,32 @@ public class ChatRoomService {
     private final ChatRoomRepository chatRoomRepository;
     private final ChatMessageRepository chatMessageRepository;
     private final com.sookmyung.swapclass.domain.user.repository.UserRepository userRepository;
+
+    // ── #0 내 채팅방 목록 조회 (최근 활동순) ─────────────────────────
+    public List<ChatRoomSummaryResponse> getMyChatRooms(Long userId) {
+        if (userId == null) {
+            throw new CustomException(ErrorCode.UNAUTHORIZED);
+        }
+
+        List<ChatRoom> rooms = chatRoomRepository.findMyRoomsWithDetails(userId);
+        if (rooms.isEmpty()) {
+            return List.of();
+        }
+
+        // 각 방의 마지막 메시지를 한 번의 쿼리로 로딩 (roomId → 마지막 메시지)
+        List<Long> roomIds = rooms.stream().map(ChatRoom::getId).toList();
+        Map<Long, ChatMessage> lastMessageByRoom = chatMessageRepository
+                .findLatestMessagesByRoomIds(roomIds).stream()
+                .collect(Collectors.toMap(m -> m.getChatRoom().getId(), Function.identity()));
+
+        return rooms.stream()
+                .map(room -> ChatRoomSummaryResponse.of(room, userId, lastMessageByRoom.get(room.getId())))
+                // 마지막 메시지 시각 내림차순, 메시지 없는 방은 뒤로
+                .sorted(Comparator.comparing(
+                        ChatRoomSummaryResponse::lastMessageAt,
+                        Comparator.nullsLast(Comparator.reverseOrder())))
+                .toList();
+    }
 
     // ── #1 채팅방 조회 (상태 + 메시지 내역, 커서 페이징) ─────────────
     public ChatRoomDetailResponse getChatRoomDetail(Long roomId, Long userId, Long before, int size) {
