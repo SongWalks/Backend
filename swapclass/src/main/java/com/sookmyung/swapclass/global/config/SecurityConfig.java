@@ -101,7 +101,9 @@ public class SecurityConfig {
         config.setAllowedOrigins(List.of(
                 "http://localhost:5173",
                 "https://localhost:5173",
-                "http://localhost:8080"
+                "http://localhost:8080",
+                "https://soo-frontend-git-develop-song-walks.vercel.app",
+                "https://swapclass.duckdns.org"
         ));
         config.setAllowedMethods(List.of("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
         config.setAllowedHeaders(List.of("*"));
