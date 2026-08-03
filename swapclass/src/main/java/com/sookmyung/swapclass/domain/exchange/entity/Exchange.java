@@ -8,6 +8,7 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
+import java.time.Duration;
 import java.time.LocalDateTime;
 
 @Entity
@@ -18,6 +19,9 @@ public class Exchange {
 
     // 교환 시간 후 72시간 경과 시 자동 '교환 성공' 처리
     private static final long AUTO_CONFIRM_HOURS = 72;
+
+    // 교환 가능 시간 제안 후 상대 응답 대기 30분 (Proposal.EXPIRE_MINUTES와 동일 정책)
+    private static final long TIME_PROPOSAL_EXPIRE_MINUTES = 30;
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -39,6 +43,10 @@ public class Exchange {
     // 교환 확정 시간 (확정 전엔 null)
     @Column(name = "scheduled_at")
     private LocalDateTime scheduledAt;
+
+    // 교환 가능 시간을 제안한 시각 (미제안 시 null). 리스트 30분 타이머 기준점.
+    @Column(name = "time_proposed_at")
+    private LocalDateTime timeProposedAt;
 
     // 자동 완료 기준 시각 (scheduledAt + 72h)
     @Column(name = "auto_confirm_at")
@@ -78,10 +86,30 @@ public class Exchange {
         this.createdAt = LocalDateTime.now();
     }
 
-    // 교환 시간 확정 → 자동완료 기준 시각도 함께 세팅
+    // 교환 시간 확정(제안) → 자동완료 기준 시각 + 제안 시각(30분 타이머 기준) 함께 세팅
     public void confirmSchedule(LocalDateTime scheduledAt) {
         this.scheduledAt = scheduledAt;
         this.autoConfirmAt = scheduledAt.plusHours(AUTO_CONFIRM_HOURS);
+        this.timeProposedAt = LocalDateTime.now();
+    }
+
+    // 교환 가능 시간이 제안됐는지 (제안 시각 존재 여부)
+    public boolean isTimeProposed() {
+        return this.timeProposedAt != null;
+    }
+
+    // 제안 응답 마감 시각 (제안 시각 + 30분). 미제안 시 null.
+    public LocalDateTime getTimeProposalExpiresAt() {
+        return timeProposedAt == null ? null : timeProposedAt.plusMinutes(TIME_PROPOSAL_EXPIRE_MINUTES);
+    }
+
+    // 제안 응답 마감까지 남은 초. 미제안이거나 이미 지났으면 0. (리스트 30분 타이머용)
+    public long getTimeProposalRemainSeconds() {
+        LocalDateTime expiresAt = getTimeProposalExpiresAt();
+        if (expiresAt == null) {
+            return 0;
+        }
+        return Math.max(Duration.between(LocalDateTime.now(), expiresAt).getSeconds(), 0);
     }
 
     public void markResult(boolean isA) {

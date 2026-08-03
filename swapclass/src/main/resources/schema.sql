@@ -228,6 +228,7 @@ CREATE TABLE exchanges (
     post_a_id BIGINT NOT NULL,
     post_b_id BIGINT NOT NULL,
     scheduled_at DATETIME,
+    time_proposed_at DATETIME,            -- 교환 가능 시간 제안 시각 (리스트 30분 타이머 기준, 미제안 시 NULL)
     auto_confirm_at DATETIME,
     status VARCHAR(20) NOT NULL,          -- IN_PROGRESS / COMPLETED / CANCELED / DISPUTE
     result_a BOOLEAN NOT NULL DEFAULT FALSE,
