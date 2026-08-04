@@ -25,6 +25,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.time.ZoneOffset;
 
 @Service
 @RequiredArgsConstructor
@@ -45,6 +46,10 @@ public class ExchangeService {
         // 채팅방 상태 → SCHEDULED
         ChatRoom chatRoom = getChatRoomByExchange(exchangeId);
         chatRoom.changeStatus(ChatRoomStatus.SCHEDULED);
+
+        if (request.getScheduledAt().isBefore(LocalDateTime.now(ZoneOffset.UTC))) {
+            throw new CustomException(ErrorCode.INVALID_SCHEDULE_TIME);
+        }
 
         return new ScheduleResponse(exchange.getScheduledAt(), exchange.getAutoConfirmAt());
     }
