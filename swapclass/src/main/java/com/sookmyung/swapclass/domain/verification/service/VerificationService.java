@@ -1,5 +1,7 @@
 package com.sookmyung.swapclass.domain.verification.service;
 
+import com.sookmyung.swapclass.domain.exchange.entity.Exchange;
+import com.sookmyung.swapclass.domain.exchange.repository.ExchangeRepository;
 import com.sookmyung.swapclass.domain.user.entity.User;
 import com.sookmyung.swapclass.domain.user.repository.UserRepository;
 import com.sookmyung.swapclass.domain.verification.dto.response.QrIssueResponse;
@@ -21,6 +23,7 @@ import org.springframework.web.multipart.MultipartFile;
 import java.io.IOException;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
+import java.time.ZonedDateTime;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 import com.sookmyung.swapclass.domain.chat.repository.ChatRoomRepository;
@@ -37,6 +40,7 @@ public class VerificationService {
     private final S3Service s3Service;
     private final RedisTemplate<String, String> redisTemplate;
     private final ChatRoomRepository chatRoomRepository;
+    private final ExchangeRepository exchangeRepository;
 
     private static final String QR_TOKEN_PREFIX = "qr:token:";
     private static final long QR_EXPIRE_MINUTES = 10;
@@ -57,7 +61,7 @@ public class VerificationService {
                     "qr_" + exchangeId + "_" + userId + ".png",
                     "image/png"
             );
-            LocalDateTime expiresAt = LocalDateTime.now(ZoneOffset.UTC).plusSeconds(ttl);
+            ZonedDateTime expiresAt = ZonedDateTime.now(ZoneOffset.UTC).plusSeconds(ttl);
             return new QrIssueResponse(existingToken, qrImageUrl, expiresAt);
         }
 
@@ -75,7 +79,7 @@ public class VerificationService {
                 "image/png"
         );
 
-        LocalDateTime expiresAt = LocalDateTime.now(ZoneOffset.UTC).plusMinutes(QR_EXPIRE_MINUTES);
+        ZonedDateTime expiresAt = ZonedDateTime.now(ZoneOffset.UTC).plusMinutes(QR_EXPIRE_MINUTES);
         return new QrIssueResponse(qrToken, qrImageUrl, expiresAt);
     }
 
@@ -97,7 +101,16 @@ public class VerificationService {
         }
 
         // Redis에서 저장된 QR 토큰 조회
-        String redisKey = QR_TOKEN_PREFIX + exchangeId + ":" + userId;
+        // 상대방 userId 찾기
+        Exchange exchange = exchangeRepository.findById(exchangeId)
+                .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND));
+
+        Long partnerUserId = exchange.getPostA().getUser().getId().equals(userId)
+                ? exchange.getPostB().getUser().getId()
+                : exchange.getPostA().getUser().getId();
+
+// 상대방 Redis 키로 조회
+        String redisKey = QR_TOKEN_PREFIX + exchangeId + ":" + partnerUserId;
         String savedToken = redisTemplate.opsForValue().get(redisKey);
 
         // 검증
@@ -121,8 +134,9 @@ public class VerificationService {
         verificationLogRepository.save(log);
 
         // 양측 인증 완료 여부 확인
+        //고유 userId 기준으로 카운트 (같은 유저의 PASSED가 2개인 경우 대비)
         long passedCount = verificationLogRepository
-                .countByExchangeIdAndStatusAndVerifyType(exchangeId, VerifyStatus.PASSED, VerifyType.PRE);
+                .countDistinctUserByExchangeIdAndStatusAndVerifyType(exchangeId, VerifyStatus.PASSED, VerifyType.PRE);
 
         String message;
         if (!qrValid) {

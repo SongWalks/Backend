@@ -40,16 +40,21 @@ public class ExchangeService {
     @Transactional
     public ScheduleResponse confirmSchedule(Long exchangeId, Long userId, ScheduleRequest request) {
         Exchange exchange = getExchangeAndValidateParticipant(exchangeId, userId);
+        if (request.getScheduledAt().isBefore(LocalDateTime.now(ZoneOffset.UTC))) {
+            throw new CustomException(ErrorCode.INVALID_SCHEDULE_TIME);
+        }
 
         exchange.confirmSchedule(request.getScheduledAt());
-
         // 채팅방 상태 → SCHEDULED
         ChatRoom chatRoom = getChatRoomByExchange(exchangeId);
         chatRoom.changeStatus(ChatRoomStatus.SCHEDULED);
 
-        if (request.getScheduledAt().isBefore(LocalDateTime.now(ZoneOffset.UTC))) {
-            throw new CustomException(ErrorCode.INVALID_SCHEDULE_TIME);
-        }
+        // 양측 알림 발송
+        String scheduledTime = request.getScheduledAt().toString();
+        notificationService.sendExchangeScheduledNotification(
+                exchange.getPostA().getUser(), scheduledTime, chatRoom.getId());
+        notificationService.sendExchangeScheduledNotification(
+                exchange.getPostB().getUser(), scheduledTime, chatRoom.getId());
 
         return new ScheduleResponse(exchange.getScheduledAt(), exchange.getAutoConfirmAt());
     }
