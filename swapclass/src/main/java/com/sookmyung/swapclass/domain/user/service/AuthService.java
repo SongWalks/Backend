@@ -93,6 +93,9 @@ public class AuthService {
         if (!passwordEncoder.matches(request.password(), user.getPassword())) {    // 비번 대조 실패 400
             throw new CustomException(ErrorCode.INVALID_PASSWORD);
         }
+        if (user.isWithdrawn()) {                        // 탈퇴 계정이면 403 (soft delete)
+            throw new CustomException(ErrorCode.USER_WITHDRAWN);
+        }
         if (user.isSuspended()) {                       // 정지 계정이면 403
             throw new CustomException(ErrorCode.USER_SUSPENDED);
         }

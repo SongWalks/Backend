@@ -22,6 +22,7 @@ public enum ErrorCode {
     PASSWORD_SAME_AS_OLD(400, "기존 비밀번호와 다른 비밀번호를 사용해주세요."),
     USER_NOT_FOUND(404, "존재하지 않는 사용자입니다."),
     USER_SUSPENDED(403, "정지된 계정입니다."),
+    USER_WITHDRAWN(403, "탈퇴한 계정입니다."),
 
     // 게시글
     POST_NOT_FOUND(404, "존재하지 않는 게시글입니다."),

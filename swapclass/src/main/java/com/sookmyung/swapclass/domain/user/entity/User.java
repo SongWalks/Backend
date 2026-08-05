@@ -98,4 +98,8 @@ public class User {
                 && suspendedUntil != null
                 && suspendedUntil.isAfter(LocalDateTime.now());
     }
+
+    public boolean isWithdrawn() {
+        return status == UserStatus.WITHDRAWN;
+    }
 }
