@@ -1,6 +1,7 @@
 package com.sookmyung.swapclass.domain.post.dto.response;
 
 import com.sookmyung.swapclass.domain.post.entity.Post;
+import com.sookmyung.swapclass.domain.post.entity.PostStatus;
 import com.sookmyung.swapclass.domain.post.entity.PostWantedCourse;
 
 import java.time.LocalDateTime;
@@ -15,6 +16,7 @@ public record PostFeedResponse(
         CourseSummaryResponse discardCourse,
         List<WantedCourseResponse> wantedCourses,
         int proposalCount,
+        PostStatus status,
         LocalDateTime createdAt
 ) {
     // proposalCount 미지정 시 0. (추천 피드 등 제안 수가 불필요한 경우)
@@ -34,6 +36,7 @@ public record PostFeedResponse(
                 CourseSummaryResponse.from(post.getDiscardCourse()),
                 wanted,
                 (int) proposalCount,
+                post.getStatus(),
                 post.getCreatedAt()
         );
     }
