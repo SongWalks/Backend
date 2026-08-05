@@ -93,7 +93,10 @@ public class PostService {
             throw new CustomException(ErrorCode.POST_NOT_FOUND);
         }
 
-        return PostDetailResponse.of(post, currentUserId);
+        // 이 게시글이 받은 PENDING 제안 수
+        long proposalCount = proposalRepository.countByReceiverPostIdAndStatus(postId, ProposalStatus.PENDING);
+
+        return PostDetailResponse.of(post, currentUserId, proposalCount);
     }
 
     // 게시글 피드 (매칭 전, 본인 글 제외, 학과 필터(선택), 최신순, 오프셋 페이징)

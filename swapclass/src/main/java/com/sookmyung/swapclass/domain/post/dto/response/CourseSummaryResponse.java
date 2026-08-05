@@ -11,7 +11,8 @@ public record CourseSummaryResponse(
         String professor,
         String classTime,
         String department,
-        String courseType
+        String courseType,
+        String category
 ) {
     public static CourseSummaryResponse from(Course course) {
         return new CourseSummaryResponse(
@@ -20,7 +21,8 @@ public record CourseSummaryResponse(
                 course.getProfessor(),
                 course.getClassTime(),
                 course.getDepartment(),
-                course.getCourseType()
+                course.getCourseType(),
+                course.getCategory()
         );
     }
 }
