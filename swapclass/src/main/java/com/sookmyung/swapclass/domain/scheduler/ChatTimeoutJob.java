@@ -13,6 +13,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.time.ZoneOffset;
 import java.util.List;
 
 @Slf4j
@@ -34,7 +35,7 @@ public class ChatTimeoutJob {
 
             // 교환 시간 + 30분 경과 시 자동 취소
             if (exchange.getScheduledAt() != null &&
-                    exchange.getScheduledAt().plusMinutes(30).isBefore(LocalDateTime.now())) {
+                    exchange.getScheduledAt().plusMinutes(30).isBefore(LocalDateTime.now(ZoneOffset.UTC))) {
 
                 exchange.cancel("TIMEOUT");
                 room.changeStatus(ChatRoomStatus.DONE);
