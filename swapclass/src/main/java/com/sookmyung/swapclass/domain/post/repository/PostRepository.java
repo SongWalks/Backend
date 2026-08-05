@@ -15,11 +15,12 @@ import java.util.List;
 
 public interface PostRepository extends JpaRepository<Post, Long> {
 
-    // [피드] 특정 상태(MATCHABLE) · 본인 글 제외 · 차단 유저 양방향 제외 · 학과 필터(선택) · 최신순 페이징
+    // [피드] 특정 상태(MATCHABLE) · 본인 글 제외 · 차단 유저 양방향 제외 · 탈퇴 유저 글 제외 · 학과 필터(선택) · 최신순 페이징
     // 비로그인(userId == null) 시 본인 제외·차단 필터를 건너뛰고 전체 공개 글을 노출
     @Query("""
         select p from Post p
         where p.status = :status
+          and p.user.status <> com.sookmyung.swapclass.domain.user.entity.UserStatus.WITHDRAWN
           and (:userId is null or p.user.id <> :userId)
           and (:userId is null or p.user.id not in (
               select b.blocked.id from UserBlock b where b.blocker.id = :userId
