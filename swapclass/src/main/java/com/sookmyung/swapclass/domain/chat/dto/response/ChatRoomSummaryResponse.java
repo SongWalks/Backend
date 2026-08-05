@@ -15,12 +15,11 @@ import java.time.LocalDateTime;
  *
  * 과목: myCourseName = 내가 넘기는 과목, partnerCourseName = 상대가 넘기는(= 내가 받는) 과목.
  *
- * 교환 가능 시간:
- *  - scheduleState = UNDECIDED : 미정 (scheduledAt 없음)
- *  - scheduleState = PROPOSED  : "교환 가능 시간을 제안했습니다" + 30분 타이머
- *      scheduledAt        = 제안된 교환 시각
- *      timerExpiresAt     = 제안 응답 마감 시각 (제안 시각 + 30분)
- *      remainSeconds      = 마감까지 남은 초 (0이면 만료/미제안)
+ * 교환 시간:
+ *  - scheduleState = UNDECIDED : 시간 미확정(조율 중). scheduledAt 없음.
+ *      프론트가 무응답 30분 카운트다운을 자체 계산해 표시.
+ *  - scheduleState = CONFIRMED : [교환시간 결정]으로 확정됨.
+ *      scheduledAt = 약속된 교환 일시 → 목록에 이 시간을 표시.
  */
 public record ChatRoomSummaryResponse(
         Long roomId,
@@ -32,8 +31,6 @@ public record ChatRoomSummaryResponse(
         String partnerCourseName,
         ChatScheduleState scheduleState,
         LocalDateTime scheduledAt,
-        LocalDateTime timerExpiresAt,
-        long remainSeconds,
         String lastMessage,
         MessageType lastMessageType,
         LocalDateTime lastMessageAt
@@ -57,8 +54,10 @@ public record ChatRoomSummaryResponse(
         }
         User partner = partnerPost.getUser();
 
-        boolean proposed = exchange.isTimeProposed();
-        ChatScheduleState scheduleState = proposed ? ChatScheduleState.PROPOSED : ChatScheduleState.UNDECIDED;
+        // 교환 시간 확정(scheduledAt 존재) 여부로 상태 판정
+        ChatScheduleState scheduleState = exchange.getScheduledAt() != null
+                ? ChatScheduleState.CONFIRMED
+                : ChatScheduleState.UNDECIDED;
 
         return new ChatRoomSummaryResponse(
                 room.getId(),
@@ -70,8 +69,6 @@ public record ChatRoomSummaryResponse(
                 partnerPost.getDiscardCourse().getName(),
                 scheduleState,
                 exchange.getScheduledAt(),
-                exchange.getTimeProposalExpiresAt(),
-                exchange.getTimeProposalRemainSeconds(),
                 lastMsg != null ? lastMsg.getContent() : null,
                 lastMsg != null ? lastMsg.getType() : null,
                 lastMsg != null ? lastMsg.getCreatedAt() : null
