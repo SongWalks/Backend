@@ -33,9 +33,20 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         if (token != null && jwtTokenProvider.validate(token)) {
             Long userId = jwtTokenProvider.getUserId(token);
 
-            // 정지 유저 체크
             User user = userRepository.findById(userId).orElse(null);
-            if (user != null && user.isSuspended()) {
+
+            // 탈퇴 유저 체크 (soft delete: 유효한 access 토큰이어도 차단)
+            if (user == null || user.isWithdrawn()) {
+                response.setStatus(HttpServletResponse.SC_FORBIDDEN);
+                response.setContentType("application/json;charset=UTF-8");
+                response.getWriter().write(
+                        "{\"success\":false,\"data\":null,\"message\":\"탈퇴한 계정입니다.\"}"
+                );
+                return;
+            }
+
+            // 정지 유저 체크
+            if (user.isSuspended()) {
                 response.setStatus(HttpServletResponse.SC_FORBIDDEN);
                 response.setContentType("application/json;charset=UTF-8");
                 response.getWriter().write(
