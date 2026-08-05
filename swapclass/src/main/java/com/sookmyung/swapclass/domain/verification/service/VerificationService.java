@@ -20,6 +20,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
 import java.time.LocalDateTime;
+import java.time.ZoneOffset;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 import com.sookmyung.swapclass.domain.chat.repository.ChatRoomRepository;
@@ -40,20 +41,33 @@ public class VerificationService {
     private static final String QR_TOKEN_PREFIX = "qr:token:";
     private static final long QR_EXPIRE_MINUTES = 10;
 
-    // QR 토큰 발급 + QR 이미지 생성 + S3 업로드
     @Transactional
     public QrIssueResponse issueQr(Long exchangeId, Long userId) {
-        // QR 토큰 생성 (UUID)
-        String qrToken = UUID.randomUUID().toString();
-
-        // Redis에 토큰 저장 (key: qr:token:{exchangeId}:{userId}, value: qrToken)
         String redisKey = QR_TOKEN_PREFIX + exchangeId + ":" + userId;
+
+        // 기존 유효한 토큰이 있으면 그대로 반환
+        String existingToken = redisTemplate.opsForValue().get(redisKey);
+        Long ttl = redisTemplate.getExpire(redisKey, TimeUnit.SECONDS);
+
+        if (existingToken != null && ttl != null && ttl > 0) {
+            byte[] qrImageBytes = qrService.generateQrImage(existingToken);
+            String qrImageUrl = s3Service.uploadBytes(
+                    qrImageBytes,
+                    "qr",
+                    "qr_" + exchangeId + "_" + userId + ".png",
+                    "image/png"
+            );
+            LocalDateTime expiresAt = LocalDateTime.now(ZoneOffset.UTC).plusSeconds(ttl);
+            return new QrIssueResponse(existingToken, qrImageUrl, expiresAt);
+        }
+
+        // 새 토큰 발급
+        String qrToken = UUID.randomUUID().toString();
+            // Redis에 토큰 저장 (key: qr:token:{exchangeId}:{userId}, value: qrToken)
         redisTemplate.opsForValue().set(redisKey, qrToken, QR_EXPIRE_MINUTES, TimeUnit.MINUTES);
-
-        // QR 이미지 생성 (토큰값을 QR 내용으로)
+            // QR 이미지 생성 (토큰값을 QR 내용으로)
         byte[] qrImageBytes = qrService.generateQrImage(qrToken);
-
-        // S3 업로드
+            // S3 업로드
         String qrImageUrl = s3Service.uploadBytes(
                 qrImageBytes,
                 "qr",
@@ -61,7 +75,7 @@ public class VerificationService {
                 "image/png"
         );
 
-        LocalDateTime expiresAt = LocalDateTime.now().plusMinutes(QR_EXPIRE_MINUTES);
+        LocalDateTime expiresAt = LocalDateTime.now(ZoneOffset.UTC).plusMinutes(QR_EXPIRE_MINUTES);
         return new QrIssueResponse(qrToken, qrImageUrl, expiresAt);
     }
 
