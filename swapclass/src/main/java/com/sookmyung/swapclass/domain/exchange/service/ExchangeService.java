@@ -50,7 +50,8 @@ public class ExchangeService {
         chatRoom.changeStatus(ChatRoomStatus.SCHEDULED);
 
         // 양측 알림 발송
-        String scheduledTime = request.getScheduledAt().toString();
+        String scheduledTime = request.getScheduledAt()
+                .format(java.time.format.DateTimeFormatter.ofPattern("MM월 dd일 HH시 mm분"));
         notificationService.sendExchangeScheduledNotification(
                 exchange.getPostA().getUser(), scheduledTime, chatRoom.getId());
         notificationService.sendExchangeScheduledNotification(
