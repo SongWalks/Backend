@@ -14,6 +14,7 @@ import com.sookmyung.swapclass.domain.lounge.repository.LoungeBookmarkRepository
 import com.sookmyung.swapclass.domain.lounge.repository.LoungeCommentRepository;
 import com.sookmyung.swapclass.domain.lounge.repository.LoungeLikeRepository;
 import com.sookmyung.swapclass.domain.lounge.repository.LoungePostRepository;
+import com.sookmyung.swapclass.domain.graduation.repository.GraduationCourseRepository;
 import com.sookmyung.swapclass.domain.user.entity.User;
 import com.sookmyung.swapclass.domain.user.repository.UserRepository;
 import com.sookmyung.swapclass.global.exception.CustomException;
@@ -35,6 +36,7 @@ public class LoungePostService {
     private final LoungeBookmarkRepository bookmarkRepository;
     private final UserRepository userRepository;
     private final CourseRepository courseRepository;
+    private final GraduationCourseRepository graduationCourseRepository;
 
     // [작성] POST /api/lounge/posts
     @Transactional
@@ -67,13 +69,18 @@ public class LoungePostService {
 
         boolean liked = false;
         boolean bookmarked = false;
+        boolean myGraduationCourse = false;
         if (userId != null) {
             User user = userRepository.getReferenceById(userId);
             liked = likeRepository.existsByPostAndUser(post, user);
             bookmarked = bookmarkRepository.existsByPostAndUser(post, user);
+            // 글쓰기 카드와 동일하게 '내 졸업요건' 배지 판정 (같은 학수번호면 다른 분반 포함 true)
+            String code = post.getCourse().getCode();
+            myGraduationCourse = code != null
+                    && graduationCourseRepository.findCourseCodesByUserId(userId).contains(code);
         }
 
-        return LoungePostDetailResponse.of(post, liked, bookmarked, comments, userId);
+        return LoungePostDetailResponse.of(post, liked, bookmarked, myGraduationCourse, comments, userId);
     }
 
     // [수정] PATCH /api/lounge/posts/{postId} — 본인 글만, 과목 태그는 수정 불가

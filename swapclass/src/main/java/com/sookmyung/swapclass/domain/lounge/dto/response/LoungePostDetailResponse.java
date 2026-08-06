@@ -1,5 +1,6 @@
 package com.sookmyung.swapclass.domain.lounge.dto.response;
 
+import com.sookmyung.swapclass.domain.course.dto.response.LectureResponse;
 import com.sookmyung.swapclass.domain.lounge.entity.LoungeComment;
 import com.sookmyung.swapclass.domain.lounge.entity.LoungePost;
 import com.sookmyung.swapclass.domain.lounge.entity.LoungePostType;
@@ -12,6 +13,7 @@ public record LoungePostDetailResponse(
         LoungePostType type,
         Long courseId,
         String courseName,
+        LectureResponse course, // 글쓰기와 동일한 과목 카드용(교수/수업시간/배지 포함)
         String title,
         String content,
         Long authorId,
@@ -27,6 +29,7 @@ public record LoungePostDetailResponse(
     public static LoungePostDetailResponse of(LoungePost post,
                                               boolean liked,
                                               boolean bookmarked,
+                                              boolean myGraduationCourse,
                                               List<LoungeComment> comments,
                                               Long currentUserId) {
         return new LoungePostDetailResponse(
@@ -34,6 +37,7 @@ public record LoungePostDetailResponse(
                 post.getType(),
                 post.getCourse().getId(),
                 post.getCourse().getName(),
+                LectureResponse.from(post.getCourse(), myGraduationCourse),
                 post.getTitle(),
                 post.getContent(),
                 post.getUser().getId(),
