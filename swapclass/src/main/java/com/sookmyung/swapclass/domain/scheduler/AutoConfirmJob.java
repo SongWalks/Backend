@@ -14,13 +14,16 @@ import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
-import java.time.ZoneOffset;
+import java.time.ZoneId;
 import java.util.List;
 
 @Slf4j
 @Component
 @RequiredArgsConstructor
 public class AutoConfirmJob {
+
+    // autoConfirmAt은 KST 벽시계로 저장되므로 비교 기준도 KST여야 한다. (UTC 비교 시 9시간 지연)
+    private static final ZoneId KST = ZoneId.of("Asia/Seoul");
 
     private final ExchangeRepository exchangeRepository;
     private final ChatRoomRepository chatRoomRepository;
@@ -31,7 +34,7 @@ public class AutoConfirmJob {
     @Transactional
     public void autoConfirm() {
         List<Exchange> exchanges = exchangeRepository
-                .findByStatusAndAutoConfirmAtBefore(ExchangeStatus.IN_PROGRESS, LocalDateTime.now(ZoneOffset.UTC));
+                .findByStatusAndAutoConfirmAtBefore(ExchangeStatus.IN_PROGRESS, LocalDateTime.now(KST));
 
         for (Exchange exchange : exchanges) {
             exchange.complete();

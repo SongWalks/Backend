@@ -11,13 +11,17 @@ import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
-import java.time.ZoneOffset;
+import java.time.ZoneId;
 import java.util.List;
 
 @Slf4j
 @Component
 @RequiredArgsConstructor
 public class ProposalExpireJob {
+
+    // 엔티티(Proposal.onCreate)가 expiresAt을 KST 벽시계로 저장하므로 비교 기준도 KST여야 한다.
+    // UTC로 비교하면 잡의 시계가 9시간 뒤처져 만료가 9시간 30분 지연된다.
+    private static final ZoneId KST = ZoneId.of("Asia/Seoul");
 
     private final ProposalRepository proposalRepository;
     private final NotificationService notificationService;
@@ -27,7 +31,7 @@ public class ProposalExpireJob {
     @Transactional
     public void expireProposals() {
         List<Proposal> expiredProposals = proposalRepository
-                .findByStatusAndExpiresAtBefore(ProposalStatus.PENDING, LocalDateTime.now(ZoneOffset.UTC));
+                .findByStatusAndExpiresAtBefore(ProposalStatus.PENDING, LocalDateTime.now(KST));
 
         for (Proposal proposal : expiredProposals) {
             proposal.markExpired();

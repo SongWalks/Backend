@@ -13,13 +13,16 @@ import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
-import java.time.ZoneOffset;
+import java.time.ZoneId;
 import java.util.List;
 
 @Slf4j
 @Component
 @RequiredArgsConstructor
 public class ChatTimeoutJob {
+
+    // scheduledAt은 KST 벽시계로 저장되므로 비교 기준도 KST여야 한다. (UTC 비교 시 9시간 지연)
+    private static final ZoneId KST = ZoneId.of("Asia/Seoul");
 
     private final ChatRoomRepository chatRoomRepository;
     private final NotificationService notificationService;
@@ -35,7 +38,7 @@ public class ChatTimeoutJob {
 
             // 교환 시간 + 30분 경과 시 자동 취소
             if (exchange.getScheduledAt() != null &&
-                    exchange.getScheduledAt().plusMinutes(30).isBefore(LocalDateTime.now(ZoneOffset.UTC))) {
+                    exchange.getScheduledAt().plusMinutes(30).isBefore(LocalDateTime.now(KST))) {
 
                 exchange.cancel("TIMEOUT");
                 room.changeStatus(ChatRoomStatus.DONE);
