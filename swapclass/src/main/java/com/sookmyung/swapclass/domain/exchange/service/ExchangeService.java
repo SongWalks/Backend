@@ -150,7 +150,7 @@ public class ExchangeService {
                 chatRoomId,
                 CourseSummaryResponse.from(myPost.getDiscardCourse()),
                 CourseSummaryResponse.from(partnerPost.getDiscardCourse()),
-                exchange.getScheduledAt(),
+                toUtc(exchange.getScheduledAt()),
                 remainSeconds);
     }
 

@@ -11,7 +11,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
-import java.time.ZoneOffset;
+import java.time.ZoneId;
 import java.util.List;
 import org.springframework.data.redis.core.RedisTemplate;
 import java.util.concurrent.TimeUnit;
@@ -20,6 +20,10 @@ import java.util.concurrent.TimeUnit;
 @Component
 @RequiredArgsConstructor
 public class ExchangeAlarm30MinJob {
+
+    // scheduledAt은 KST 벽시계로 저장되므로 비교 기준도 KST여야 한다.
+    // UTC로 비교하면 9시간 어긋나 ±30초 발송 윈도우에 영원히 진입하지 못한다(알림 누락).
+    private static final ZoneId KST = ZoneId.of("Asia/Seoul");
 
     private final ChatRoomRepository chatRoomRepository;
     private final NotificationService notificationService;
@@ -30,7 +34,7 @@ public class ExchangeAlarm30MinJob {
     @Transactional
     public void send30MinAlarm() {
         List<ChatRoom> scheduledRooms = chatRoomRepository.findByStatus(ChatRoomStatus.SCHEDULED);
-        LocalDateTime now = LocalDateTime.now(ZoneOffset.UTC);
+        LocalDateTime now = LocalDateTime.now(KST);
 
         for (ChatRoom room : scheduledRooms) {
             if (room.getExchange().getScheduledAt() == null) continue;
