@@ -291,3 +291,4 @@ CREATE TABLE inquiries (
                            PRIMARY KEY (id),
                            FOREIGN KEY (user_id) REFERENCES users(id)
 );
+
