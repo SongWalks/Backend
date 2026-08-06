@@ -23,14 +23,18 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Duration;
+import java.time.Instant;
 import java.time.LocalDateTime;
+import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
-import java.time.ZoneOffset;
 
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
 public class ExchangeService {
+
+    private static final ZoneId KST = ZoneId.of("Asia/Seoul");
 
     private final ExchangeRepository exchangeRepository;
     private final ChatRoomRepository chatRoomRepository;
@@ -40,24 +44,38 @@ public class ExchangeService {
     @Transactional
     public ScheduleResponse confirmSchedule(Long exchangeId, Long userId, ScheduleRequest request) {
         Exchange exchange = getExchangeAndValidateParticipant(exchangeId, userId);
-        if (request.getScheduledAt().isBefore(LocalDateTime.now(ZoneOffset.UTC))) {
+
+        // 프론트가 보낸 UTC 절대시각(Z 포함)을 KST 벽시계 시간으로 변환해 저장
+        // (서버 전체가 KST LocalDateTime 기준으로 저장·비교하므로)
+        LocalDateTime scheduledAtKst = request.getScheduledAt()
+                .atZoneSameInstant(KST)
+                .toLocalDateTime();
+
+        // 미래 시간 검증 (KST 기준)
+        if (scheduledAtKst.isBefore(LocalDateTime.now())) {
             throw new CustomException(ErrorCode.INVALID_SCHEDULE_TIME);
         }
 
-        exchange.confirmSchedule(request.getScheduledAt());
+        exchange.confirmSchedule(scheduledAtKst);
         // 채팅방 상태 → SCHEDULED
         ChatRoom chatRoom = getChatRoomByExchange(exchangeId);
         chatRoom.changeStatus(ChatRoomStatus.SCHEDULED);
 
-        // 양측 알림 발송
-        String scheduledTime = request.getScheduledAt()
-                .format(java.time.format.DateTimeFormatter.ofPattern("MM월 dd일 HH시 mm분"));
+        // 양측 알림 발송 (KST 기준 표시)
+        String scheduledTime = scheduledAtKst
+                .format(DateTimeFormatter.ofPattern("MM월 dd일 HH시 mm분"));
         notificationService.sendExchangeScheduledNotification(
                 exchange.getPostA().getUser(), scheduledTime, chatRoom.getId());
         notificationService.sendExchangeScheduledNotification(
                 exchange.getPostB().getUser(), scheduledTime, chatRoom.getId());
 
-        return new ScheduleResponse(exchange.getScheduledAt(), exchange.getAutoConfirmAt());
+        // 저장된 KST 값을 다시 UTC Instant로 변환해 응답 (Z 포함, 입력과 동일 절대시각)
+        return new ScheduleResponse(toUtc(exchange.getScheduledAt()), toUtc(exchange.getAutoConfirmAt()));
+    }
+
+    // KST LocalDateTime → UTC Instant (응답 직렬화 시 "...Z" 형식)
+    private Instant toUtc(LocalDateTime kst) {
+        return kst == null ? null : kst.atZone(KST).toInstant();
     }
 
     // 교환 결과 선택 (SUCCESS / FAIL)

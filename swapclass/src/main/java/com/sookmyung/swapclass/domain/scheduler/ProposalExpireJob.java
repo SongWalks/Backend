@@ -32,8 +32,14 @@ public class ProposalExpireJob {
         for (Proposal proposal : expiredProposals) {
             proposal.markExpired();
 
-            // 발신자에게 타임아웃 알림
-            notificationService.sendMatchTimeoutNotification(proposal.getSender());
+            // 알림 실패가 만료 처리(상태 변경) 트랜잭션을 롤백시키지 않도록 격리.
+            // 한 건 실패해도 나머지 만료 처리는 그대로 커밋되어야 함.
+            try {
+                notificationService.sendMatchTimeoutNotification(proposal.getSender());
+            } catch (Exception e) {
+                log.warn("ProposalExpireJob - proposalId: {} 만료 알림 발송 실패 (만료 처리는 진행)",
+                        proposal.getId(), e);
+            }
 
             log.info("ProposalExpireJob - proposalId: {} 만료 처리", proposal.getId());
         }
