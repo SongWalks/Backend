@@ -10,6 +10,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 import java.util.Map;
+import java.util.HashMap;
 
 @RestController
 @RequestMapping("/api/notifications")
@@ -22,7 +23,21 @@ public class NotificationController {
     @GetMapping
     public ResponseEntity<ApiResponse<Map<String, Object>>> getNotifications(
             @AuthenticationPrincipal Long userId) {
-        List<Notification> notifications = notificationService.getNotifications(userId);
+        List<Map<String, Object>> notifications = notificationService.getNotifications(userId)
+                .stream()
+                .map(n -> {
+                    Map<String, Object> map = new java.util.HashMap<>();
+                    map.put("id", n.getId());
+                    map.put("type", n.getType());
+                    map.put("title", n.getTitle() != null ? n.getTitle() : "");
+                    map.put("body", n.getBody() != null ? n.getBody() : "");
+                    map.put("deepLink", n.getDeepLink() != null ? n.getDeepLink() : "");
+                    map.put("relatedId", n.getRelatedId() != null ? n.getRelatedId() : 0L);
+                    map.put("isRead", n.isRead());
+                    map.put("createdAt", n.getCreatedAt());
+                    return map;
+                })
+                .toList();
         long unreadCount = notificationService.getUnreadCount(userId);
         return ResponseEntity.ok(ApiResponse.success(Map.of(
                 "notifications", notifications,

@@ -11,6 +11,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.time.ZoneOffset;
 import java.util.List;
 
 @Slf4j
@@ -26,7 +27,7 @@ public class ProposalExpireJob {
     @Transactional
     public void expireProposals() {
         List<Proposal> expiredProposals = proposalRepository
-                .findByStatusAndExpiresAtBefore(ProposalStatus.PENDING, LocalDateTime.now());
+                .findByStatusAndExpiresAtBefore(ProposalStatus.PENDING, LocalDateTime.now(ZoneOffset.UTC));
 
         for (Proposal proposal : expiredProposals) {
             proposal.markExpired();

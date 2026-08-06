@@ -12,6 +12,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.time.ZoneOffset;
 
 @Slf4j
 @Component
@@ -27,7 +28,7 @@ public class VerifyStartJob {
     public void startVerification() {
         List<ChatRoom> scheduledRooms = chatRoomRepository.findByStatus(ChatRoomStatus.SCHEDULED);
 
-        LocalDateTime now = LocalDateTime.now();
+        LocalDateTime now = LocalDateTime.now(ZoneOffset.UTC);
 
         for (ChatRoom room : scheduledRooms) {
             if (room.getExchange().getScheduledAt() == null) continue;
@@ -35,13 +36,10 @@ public class VerifyStartJob {
             LocalDateTime scheduledAt = room.getExchange().getScheduledAt();
             LocalDateTime verifyTime = scheduledAt.minusMinutes(5);
 
-            if (now.isAfter(verifyTime.minusSeconds(30)) &&
-                    now.isBefore(verifyTime.plusSeconds(30))) {
-
-                // 채팅방 상태 → VERIFYING
+            // 5분 전이 지났으면 VERIFYING으로 전환
+            if (now.isAfter(verifyTime)) {
                 room.changeStatus(ChatRoomStatus.VERIFYING);
 
-                // 양측 알림 발송
                 notificationService.sendVerifyStartNotification(
                         room.getExchange().getPostA().getUser(), room.getId());
                 notificationService.sendVerifyStartNotification(

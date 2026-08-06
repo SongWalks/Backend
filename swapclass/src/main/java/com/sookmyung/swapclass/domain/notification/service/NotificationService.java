@@ -69,11 +69,11 @@ public class NotificationService {
     @Transactional
     public void sendAutoMatchProposalNotification(User user, String courseName, int priority, Long postId) {
         createNotification(
-            user,
-            NotificationType.MATCH_PROPOSAL,
-            "매칭 제안",
-            courseName + "의 " + priority + "순위 과목을 찾았습니다! 교환을 제안해보세요!",
-            postId
+                user,
+                NotificationType.MATCH_PROPOSAL,
+                courseName + " " + priority + "순위 매칭 제안",
+                "🎉 " + courseName + " 의 " + priority + "순위 과목을 찾았습니다! 교환을 제안해보세요!",
+                postId
         );
     }
 
@@ -93,11 +93,11 @@ public class NotificationService {
     @Transactional
     public void sendMatchAcceptedNotification(User user, Long chatRoomId) {
         createNotification(
-            user,
-            NotificationType.MATCH_ACCEPTED,
-            "매칭 성사",
-            "🤝 매칭이 성사되었습니다! 교환 준비방으로 이동하여 시간을 조율해 주세요.",
-            chatRoomId
+                user,
+                NotificationType.MATCH_ACCEPTED,
+                "매칭완료",
+                "매칭이 성사되었습니다!\n교환 채팅방으로 이동하여 시간을 조율해 주세요",
+                chatRoomId
         );
     }
 
@@ -139,15 +139,16 @@ public class NotificationService {
 
     // ─── 교환 일정 알림 ───────────────────────────────────────
 
+
     // 교환 시간 확정 알림
     @Transactional
     public void sendExchangeScheduledNotification(User user, String scheduledTime, Long chatRoomId) {
         createNotification(
-            user,
-            NotificationType.EXCHANGE_SCHEDULED,
-            "교환 시간 확정",
-            scheduledTime + "으로 교환 시간이 확정되었습니다.",
-            chatRoomId
+                user,
+                NotificationType.EXCHANGE_SCHEDULED,
+                "교환 시간 확정",
+                scheduledTime + "으로 교환 시간이 확정되었습니다.\n교환 5분 전 과목 보유 인증이 진행됩니다. 약속 시간을 꼭 지켜주세요.",
+                chatRoomId
         );
     }
 
@@ -195,8 +196,8 @@ public class NotificationService {
         createNotification(
             postOwner,
             NotificationType.LIKE,
-            "게시글 찜",
-            "👀 누군가 회원님의 [" + courseName + "] 과목을 찜했습니다! 상대방이 버리는 과목을 확인해 볼까요?",
+                "찜 알림",
+                "누군가 회원님의 [" + courseName + "] 과목을 찜했습니다! 상대방이 버리는 과목을 확인해 볼까요?",
             likerUserId
         );
     }

@@ -1,6 +1,8 @@
 spring:
   profiles:
     active: local
+  jackson:
+    time-zone: UTC
   jpa:
     hibernate:
       ddl-auto: validate

@@ -1,8 +1,11 @@
 package com.sookmyung.swapclass.domain.verification.repository;
 
 import com.sookmyung.swapclass.domain.verification.entity.VerificationLog;
+import com.sookmyung.swapclass.domain.verification.entity.VerifyStatus;
 import com.sookmyung.swapclass.domain.verification.entity.VerifyType;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 
 import java.util.List;
 import java.util.Optional;
@@ -21,4 +24,10 @@ public interface VerificationLogRepository extends JpaRepository<VerificationLog
             Long exchangeId,
             com.sookmyung.swapclass.domain.verification.entity.VerifyStatus status,
             VerifyType verifyType);
+
+    @Query("SELECT COUNT(DISTINCT v.user.id) FROM VerificationLog v WHERE v.exchangeId = :exchangeId AND v.status = :status AND v.verifyType = :verifyType")
+    long countDistinctUserByExchangeIdAndStatusAndVerifyType(
+            @Param("exchangeId") Long exchangeId,
+            @Param("status") VerifyStatus status,
+            @Param("verifyType") VerifyType verifyType);
 }

@@ -14,6 +14,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.time.ZoneOffset;
 import java.util.List;
 
 @Slf4j
@@ -30,7 +31,7 @@ public class AutoConfirmJob {
     @Transactional
     public void autoConfirm() {
         List<Exchange> exchanges = exchangeRepository
-                .findByStatusAndAutoConfirmAtBefore(ExchangeStatus.IN_PROGRESS, LocalDateTime.now());
+                .findByStatusAndAutoConfirmAtBefore(ExchangeStatus.IN_PROGRESS, LocalDateTime.now(ZoneOffset.UTC));
 
         for (Exchange exchange : exchanges) {
             exchange.complete();
