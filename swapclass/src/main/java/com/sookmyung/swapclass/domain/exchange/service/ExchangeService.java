@@ -23,13 +23,17 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Duration;
+import java.time.Instant;
 import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.util.List;
 
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
 public class ExchangeService {
+
+    private static final ZoneId KST = ZoneId.of("Asia/Seoul");
 
     private final ExchangeRepository exchangeRepository;
     private final ChatRoomRepository chatRoomRepository;
@@ -40,13 +44,24 @@ public class ExchangeService {
     public ScheduleResponse confirmSchedule(Long exchangeId, Long userId, ScheduleRequest request) {
         Exchange exchange = getExchangeAndValidateParticipant(exchangeId, userId);
 
-        exchange.confirmSchedule(request.getScheduledAt());
+        // 프론트가 보낸 UTC 절대시각(Z 포함)을 KST 벽시계 시간으로 변환해 저장
+        // (서버 전체가 KST LocalDateTime 기준으로 저장·비교하므로)
+        LocalDateTime scheduledAtKst = request.getScheduledAt()
+                .atZoneSameInstant(KST)
+                .toLocalDateTime();
+        exchange.confirmSchedule(scheduledAtKst);
 
         // 채팅방 상태 → SCHEDULED
         ChatRoom chatRoom = getChatRoomByExchange(exchangeId);
         chatRoom.changeStatus(ChatRoomStatus.SCHEDULED);
 
-        return new ScheduleResponse(exchange.getScheduledAt(), exchange.getAutoConfirmAt());
+        // 저장된 KST 값을 다시 UTC Instant로 변환해 응답 (Z 포함, 입력과 동일 절대시각)
+        return new ScheduleResponse(toUtc(exchange.getScheduledAt()), toUtc(exchange.getAutoConfirmAt()));
+    }
+
+    // KST LocalDateTime → UTC Instant (응답 직렬화 시 "...Z" 형식)
+    private Instant toUtc(LocalDateTime kst) {
+        return kst == null ? null : kst.atZone(KST).toInstant();
     }
 
     // 교환 결과 선택 (SUCCESS / FAIL)
