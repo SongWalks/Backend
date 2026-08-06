@@ -54,12 +54,18 @@ public class QrService {
             com.google.zxing.BinaryBitmap bitmap =
                     new com.google.zxing.BinaryBitmap(binarizer);
 
+            // 힌트 추가
+            java.util.Map<com.google.zxing.DecodeHintType, Object> hints = new java.util.HashMap<>();
+            hints.put(com.google.zxing.DecodeHintType.TRY_HARDER, Boolean.TRUE);
+            hints.put(com.google.zxing.DecodeHintType.POSSIBLE_FORMATS,
+                    java.util.List.of(com.google.zxing.BarcodeFormat.QR_CODE));
+
             com.google.zxing.MultiFormatReader reader = new com.google.zxing.MultiFormatReader();
-            com.google.zxing.Result result = reader.decode(bitmap);
+            com.google.zxing.Result result = reader.decode(bitmap, hints);
             return result.getText();
 
         } catch (Exception e) {
-            return null; // 디코딩 실패 시 null 반환
+            return null;
         }
     }
 }
