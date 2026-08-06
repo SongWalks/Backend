@@ -26,6 +26,7 @@ import java.time.Duration;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
 
 @Service
@@ -49,11 +50,24 @@ public class ExchangeService {
         LocalDateTime scheduledAtKst = request.getScheduledAt()
                 .atZoneSameInstant(KST)
                 .toLocalDateTime();
-        exchange.confirmSchedule(scheduledAtKst);
 
+        // 미래 시간 검증 (KST 기준)
+        if (scheduledAtKst.isBefore(LocalDateTime.now())) {
+            throw new CustomException(ErrorCode.INVALID_SCHEDULE_TIME);
+        }
+
+        exchange.confirmSchedule(scheduledAtKst);
         // 채팅방 상태 → SCHEDULED
         ChatRoom chatRoom = getChatRoomByExchange(exchangeId);
         chatRoom.changeStatus(ChatRoomStatus.SCHEDULED);
+
+        // 양측 알림 발송 (KST 기준 표시)
+        String scheduledTime = scheduledAtKst
+                .format(DateTimeFormatter.ofPattern("MM월 dd일 HH시 mm분"));
+        notificationService.sendExchangeScheduledNotification(
+                exchange.getPostA().getUser(), scheduledTime, chatRoom.getId());
+        notificationService.sendExchangeScheduledNotification(
+                exchange.getPostB().getUser(), scheduledTime, chatRoom.getId());
 
         // 저장된 KST 값을 다시 UTC Instant로 변환해 응답 (Z 포함, 입력과 동일 절대시각)
         return new ScheduleResponse(toUtc(exchange.getScheduledAt()), toUtc(exchange.getAutoConfirmAt()));
