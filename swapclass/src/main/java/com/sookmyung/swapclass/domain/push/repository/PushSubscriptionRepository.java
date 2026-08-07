@@ -19,4 +19,7 @@ public interface PushSubscriptionRepository extends JpaRepository<PushSubscripti
 
     // 토큰으로 구독 조회
     Optional<PushSubscription> findByFcmToken(String fcmToken);
+
+    //중복 방지
+    Optional<PushSubscription> findByUserIdAndDeviceType(Long userId, String deviceType);
 }

@@ -32,9 +32,9 @@ public class PushService {
                 .orElseThrow(() -> new CustomException(ErrorCode.USER_NOT_FOUND));
 
         // 이미 등록된 토큰이면 업데이트
-        pushSubscriptionRepository.findByUserIdAndFcmToken(userId, request.getFcmToken())
+        pushSubscriptionRepository.findByUserIdAndDeviceType(userId, request.getDeviceType())
                 .ifPresentOrElse(
-                        sub -> log.info("이미 등록된 FCM 토큰"),
+                        sub -> sub.updateToken(request.getFcmToken()), // 있으면 토큰 갱신
                         () -> {
                             PushSubscription subscription = PushSubscription.builder()
                                     .user(user)
