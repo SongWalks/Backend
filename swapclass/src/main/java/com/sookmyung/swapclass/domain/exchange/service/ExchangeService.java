@@ -132,7 +132,7 @@ public class ExchangeService {
             return null;
         }
         List<Exchange> exchanges = exchangeRepository.findParticipatingWithSchedule(
-                ExchangeStatus.IN_PROGRESS, userId, PageRequest.of(0, 1));
+                ExchangeStatus.IN_PROGRESS, userId, LocalDateTime.now(KST), PageRequest.of(0, 1));
         if (exchanges.isEmpty()) {
             return null;
         }
