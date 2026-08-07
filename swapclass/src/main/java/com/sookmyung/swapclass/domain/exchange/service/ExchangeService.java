@@ -93,6 +93,9 @@ public class ExchangeService {
             // 양측 모두 SUCCESS면 COMPLETED (Exchange.markResult 내부에서 처리)
             if (exchange.getStatus() == ExchangeStatus.COMPLETED) {
                 chatRoom.changeStatus(ChatRoomStatus.DONE);
+                // 양측 게시글도 완료 처리 (IN_EXCHANGE → COMPLETED)
+                exchange.getPostA().markCompleted();
+                exchange.getPostB().markCompleted();
                 return new ResultResponse("COMPLETED", "교환이 완료되었습니다!");
             }
             return new ResultResponse("IN_PROGRESS", "상대방의 결과 선택을 기다리는 중입니다.");
