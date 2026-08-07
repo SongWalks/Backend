@@ -1,7 +1,5 @@
 package com.sookmyung.swapclass.domain.verification.service;
 
-import com.sookmyung.swapclass.domain.exchange.entity.Exchange;
-import com.sookmyung.swapclass.domain.exchange.repository.ExchangeRepository;
 import com.sookmyung.swapclass.domain.user.entity.User;
 import com.sookmyung.swapclass.domain.user.repository.UserRepository;
 import com.sookmyung.swapclass.domain.verification.dto.response.QrIssueResponse;
@@ -40,7 +38,6 @@ public class VerificationService {
     private final S3Service s3Service;
     private final RedisTemplate<String, String> redisTemplate;
     private final ChatRoomRepository chatRoomRepository;
-    private final ExchangeRepository exchangeRepository;
 
     private static final String QR_TOKEN_PREFIX = "qr:token:";
     private static final long QR_EXPIRE_MINUTES = 10;
@@ -100,17 +97,8 @@ public class VerificationService {
             throw new RuntimeException("이미지 읽기 실패", e);
         }
 
-        // Redis에서 저장된 QR 토큰 조회
-        // 상대방 userId 찾기
-        Exchange exchange = exchangeRepository.findById(exchangeId)
-                .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND));
-
-        Long partnerUserId = exchange.getPostA().getUser().getId().equals(userId)
-                ? exchange.getPostB().getUser().getId()
-                : exchange.getPostA().getUser().getId();
-
-// 상대방 Redis 키로 조회
-        String redisKey = QR_TOKEN_PREFIX + exchangeId + ":" + partnerUserId;
+        // Redis에서 저장된 QR 토큰 조회 (본인 userId로 조회)
+        String redisKey = QR_TOKEN_PREFIX + exchangeId + ":" + userId;
         String savedToken = redisTemplate.opsForValue().get(redisKey);
 
         // 검증
