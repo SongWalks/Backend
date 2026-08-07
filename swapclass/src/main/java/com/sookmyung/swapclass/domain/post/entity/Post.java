@@ -88,6 +88,11 @@ public class Post {
         this.status = PostStatus.IN_EXCHANGE;
     }
 
+    // 교환 완료 → 완료 상태로 전환 (재매칭 불가, 프론트 '교환 완료' 표시)
+    public void markCompleted() {
+        this.status = PostStatus.COMPLETED;
+    }
+
     public boolean isOwnedBy(Long userId) {
         return this.user.getId().equals(userId);
     }

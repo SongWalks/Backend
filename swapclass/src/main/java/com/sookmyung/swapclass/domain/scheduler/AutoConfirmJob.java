@@ -39,6 +39,10 @@ public class AutoConfirmJob {
         for (Exchange exchange : exchanges) {
             exchange.complete();
 
+            // 양측 게시글도 완료 처리 (IN_EXCHANGE → COMPLETED)
+            exchange.getPostA().markCompleted();
+            exchange.getPostB().markCompleted();
+
             // 채팅방 DONE 처리
             chatRoomRepository.findByExchangeId(exchange.getId())
                     .ifPresent(room -> room.changeStatus(ChatRoomStatus.DONE));
