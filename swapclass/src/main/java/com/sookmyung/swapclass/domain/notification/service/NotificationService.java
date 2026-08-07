@@ -6,6 +6,10 @@ import com.sookmyung.swapclass.domain.notification.repository.NotificationReposi
 import com.sookmyung.swapclass.domain.user.entity.User;
 import com.sookmyung.swapclass.global.exception.CustomException;
 import com.sookmyung.swapclass.global.exception.ErrorCode;
+import com.sookmyung.swapclass.domain.push.repository.PushSubscriptionRepository;
+import com.sookmyung.swapclass.infra.fcm.FcmService;
+import com.sookmyung.swapclass.domain.push.entity.PushSubscription;
+import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -18,6 +22,8 @@ import java.util.List;
 public class NotificationService {
 
     private final NotificationRepository notificationRepository;
+    private final FcmService fcmService;
+    private final PushSubscriptionRepository pushSubscriptionRepository;
 
     // ─── 기본 CRUD ────────────────────────────────────────────
 
@@ -61,6 +67,12 @@ public class NotificationService {
                 .relatedId(relatedId)
                 .build();
         notificationRepository.save(notification);
+
+        // FCM 푸시 발송
+        List<PushSubscription> subscriptions = pushSubscriptionRepository.findByUserId(user.getId());
+        for (PushSubscription subscription : subscriptions) {
+            fcmService.sendPushNotification(subscription.getFcmToken(), title, body);
+        }
     }
 
     // ─── 매칭 및 거래 알림 ────────────────────────────────────
