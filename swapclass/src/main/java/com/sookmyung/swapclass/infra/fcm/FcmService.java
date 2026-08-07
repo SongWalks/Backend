@@ -1,17 +1,17 @@
 package com.sookmyung.swapclass.infra.fcm;
 
-import com.google.firebase.messaging.FirebaseMessaging;
-import com.google.firebase.messaging.FirebaseMessagingException;
-import com.google.firebase.messaging.Message;
-import com.google.firebase.messaging.Notification;
+import com.google.firebase.messaging.*;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import com.sookmyung.swapclass.domain.push.repository.PushSubscriptionRepository;
+import com.google.firebase.messaging.MessagingErrorCode;
 
 @Slf4j
 @Service
 @RequiredArgsConstructor
 public class FcmService {
+    private final PushSubscriptionRepository pushSubscriptionRepository;
 
     // FCM 토큰으로 푸시 알림 발송
     public void sendPushNotification(String fcmToken, String title, String body) {
@@ -49,6 +49,12 @@ public class FcmService {
 
         } catch (FirebaseMessagingException e) {
             log.error("FCM 푸시 발송 실패 - token: {}, error: {}", fcmToken, e.getMessage());
+            // NotRegistered, Device unregistered 에러 시 토큰 삭제
+            if (e.getMessagingErrorCode() == MessagingErrorCode.UNREGISTERED) {
+                pushSubscriptionRepository.findByFcmToken(fcmToken)
+                        .ifPresent(pushSubscriptionRepository::delete);
+                log.info("만료된 FCM 토큰 삭제: {}", fcmToken);
+            }
         }
     }
 }
