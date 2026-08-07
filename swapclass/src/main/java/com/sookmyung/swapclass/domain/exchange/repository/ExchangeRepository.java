@@ -28,14 +28,17 @@ public interface ExchangeRepository extends JpaRepository<Exchange, Long> {
     boolean existsActiveByUser(@Param("userId") Long userId,
                                @Param("statuses") Collection<ExchangeStatus> statuses);
 
-    // [홈 히어로 배너] 내가 참여 중이고 교환 시간이 확정된 지정 상태 교환, 임박한 순.
-    // Pageable로 최상위 1건만 조회한다.
+    // [홈 히어로 배너] 내가 참여 중이고 교환 시간이 확정된 지정 상태 교환 중, 아직 지나지 않은
+    // 다가오는 약속만 대상으로 가장 임박한 순. Pageable로 최상위 1건만 조회한다.
+    // (지난 약속 제외: now 이전은 걸러 옛 약속이 배너에 남는 문제 방지)
     @Query("select e from Exchange e " +
             "where e.status = :status " +
             "and e.scheduledAt is not null " +
+            "and e.scheduledAt >= :now " +
             "and (e.postA.user.id = :userId or e.postB.user.id = :userId) " +
             "order by e.scheduledAt asc")
     List<Exchange> findParticipatingWithSchedule(@Param("status") ExchangeStatus status,
                                                  @Param("userId") Long userId,
+                                                 @Param("now") LocalDateTime now,
                                                  Pageable pageable);
 }
