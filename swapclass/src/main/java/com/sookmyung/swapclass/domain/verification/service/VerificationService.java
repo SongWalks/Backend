@@ -17,6 +17,8 @@ import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
+import org.springframework.messaging.simp.SimpMessagingTemplate;
+import java.util.Map;
 
 import java.io.IOException;
 import java.time.LocalDateTime;
@@ -38,6 +40,7 @@ public class VerificationService {
     private final S3Service s3Service;
     private final RedisTemplate<String, String> redisTemplate;
     private final ChatRoomRepository chatRoomRepository;
+    private final SimpMessagingTemplate messagingTemplate;
 
     private static final String QR_TOKEN_PREFIX = "qr:token:";
     private static final long QR_EXPIRE_MINUTES = 10;
@@ -132,7 +135,14 @@ public class VerificationService {
         } else if (passedCount >= 2) {
             message = "양측 인증 완료! 카운트다운을 시작합니다.";
             chatRoomRepository.findByExchangeId(exchangeId)
-                    .ifPresent(chatRoom -> chatRoom.changeStatus(ChatRoomStatus.COUNTDOWN));
+                    .ifPresent(chatRoom -> {
+                        chatRoom.changeStatus(ChatRoomStatus.COUNTDOWN);
+                        // WebSocket으로 카운트다운 시작 신호 발송
+                        messagingTemplate.convertAndSend(
+                                "/topic/chat-rooms/" + chatRoom.getId(),
+                                Map.of("type", "COUNTDOWN_START", "seconds", 10)
+                        );
+                    });
         } else {
             message = "인증이 완료되었습니다.";  // ← 한쪽만 인증 완료된 경우
         }
