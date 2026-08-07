@@ -131,8 +131,8 @@ public class NotificationService {
         createNotification(
             user,
             NotificationType.MATCH_TIMEOUT,
-            "매칭 무산",
-            "매칭이 무산되어 다시 교환을 요청할 수 있는 상태로 돌아갔습니다. 다시 요청해주세요!",
+            "교환 매칭 무산",
+            "30분이 지나 매칭이 무산되어 다시 교환을 요청할 수 있는 상태로 돌아갔습니다. 다시 요청해주세요!",
             null
         );
     }
@@ -144,7 +144,7 @@ public class NotificationService {
             user,
             NotificationType.CANCEL,
             "교환 매칭 무산",
-            "매칭이 무산되어 다시 교환을 요청할 수 있는 상태로 돌아갔습니다. 다시 요청해주세요!",
+            "매칭이 거래파기로 무산되어 다시 교환을 요청할 수 있는 상태로 돌아갔습니다. 다시 요청해주세요!",
             null
         );
     }

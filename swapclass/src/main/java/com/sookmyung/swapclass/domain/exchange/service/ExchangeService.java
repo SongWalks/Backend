@@ -45,6 +45,7 @@ public class ExchangeService {
     public ScheduleResponse confirmSchedule(Long exchangeId, Long userId, ScheduleRequest request) {
         Exchange exchange = getExchangeAndValidateParticipant(exchangeId, userId);
 
+
         // 프론트가 보낸 UTC 절대시각(Z 포함)을 KST 벽시계 시간으로 변환해 저장
         // (서버 전체가 KST LocalDateTime 기준으로 저장·비교하므로)
         LocalDateTime scheduledAtKst = request.getScheduledAt()
@@ -56,9 +57,16 @@ public class ExchangeService {
             throw new CustomException(ErrorCode.INVALID_SCHEDULE_TIME);
         }
 
+        // 채팅방 먼저 가져오기
+        ChatRoom chatRoom = getChatRoomByExchange(exchangeId);
+
+        // 이미 SCHEDULED 상태면 중복 방지
+        if (chatRoom.getStatus() == ChatRoomStatus.SCHEDULED) {
+            throw new CustomException(ErrorCode.INVALID_INPUT);
+        }
+
         exchange.confirmSchedule(scheduledAtKst);
         // 채팅방 상태 → SCHEDULED
-        ChatRoom chatRoom = getChatRoomByExchange(exchangeId);
         chatRoom.changeStatus(ChatRoomStatus.SCHEDULED);
 
         // 양측 알림 발송 (KST 기준 표시)
@@ -87,6 +95,11 @@ public class ExchangeService {
         // 내가 A인지 B인지 판별
         boolean isA = exchange.getPostA().getUser().getId().equals(userId);
 
+        // 이미 완료된 교환인지 확인
+        if (chatRoom.getStatus() == ChatRoomStatus.DONE) {
+            throw new CustomException(ErrorCode.INVALID_INPUT);
+        }
+        
         if (request.getSuccess()) {
             // SUCCESS 선택
             exchange.markResult(isA);
