@@ -113,6 +113,11 @@ public class ExchangeService {
         Exchange exchange = getExchangeAndValidateParticipant(exchangeId, userId);
         ChatRoom chatRoom = getChatRoomByExchange(exchangeId);
 
+        // 이미 파기된 교환인지 확인
+        if (chatRoom.getStatus() == ChatRoomStatus.DONE) {
+            throw new CustomException(ErrorCode.INVALID_INPUT);
+        }
+
         exchange.cancel(request.getReason() +
                 (request.getDetail() != null ? " - " + request.getDetail() : ""));
         chatRoom.changeStatus(ChatRoomStatus.DONE);
