@@ -99,10 +99,12 @@ public class PostService {
         return PostDetailResponse.of(post, currentUserId, proposalCount);
     }
 
-    // 게시글 피드 (매칭 전, 본인 글 제외, 학과 필터(선택), 최신순, 오프셋 페이징)
-    public PageResponse<PostFeedResponse> getFeed(Long userId, String dept, int page, int size) {
+    // 게시글 피드 (매칭 전, 본인 글 제외, 학과 필터(선택), 키워드 검색(선택), 최신순, 오프셋 페이징)
+    public PageResponse<PostFeedResponse> getFeed(Long userId, String dept, String keyword, int page, int size) {
+        // 공백뿐인 키워드는 필터 없음으로 취급
+        String kw = (keyword == null || keyword.isBlank()) ? null : keyword.trim();
         Pageable pageable = PageRequest.of(page, size);
-        Page<Post> posts = postRepository.findFeed(PostStatus.MATCHABLE, userId, dept, pageable);
+        Page<Post> posts = postRepository.findFeed(PostStatus.MATCHABLE, userId, dept, kw, pageable);
 
         // 페이지에 포함된 게시글들의 '받은 PENDING 제안 수'를 한 번에 집계 (N+1 방지)
         List<Long> postIds = posts.getContent().stream().map(Post::getId).toList();
