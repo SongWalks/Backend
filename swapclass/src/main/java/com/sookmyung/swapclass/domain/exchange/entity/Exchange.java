@@ -71,6 +71,13 @@ public class Exchange {
     @Column(name = "completed_at")
     private LocalDateTime completedAt;
 
+    @Column(name = "countdown_ends_at")
+    private LocalDateTime countdownEndsAt;
+
+    public void startCountdown(LocalDateTime countdownEndsAt) {
+        this.countdownEndsAt = countdownEndsAt;
+    }
+
     @Builder
     public Exchange(Proposal proposal, Post postA, Post postB) {
         this.proposal = proposal;

@@ -13,6 +13,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.Map;
+
 @RestController
 @RequestMapping("/api/exchanges")
 @RequiredArgsConstructor
@@ -48,5 +50,14 @@ public class ExchangeController {
             @AuthenticationPrincipal Long userId) {
         exchangeService.cancelExchange(exchangeId, userId, request);
         return ResponseEntity.ok(ApiResponse.success(null, "거래가 파기되었습니다."));
+    }
+
+    //교환 카운트다운 준비 완료
+    @PostMapping("/{exchangeId}/countdown/ready")
+    public ResponseEntity<ApiResponse<Map<String, Object>>> readyCountdown(
+            @PathVariable Long exchangeId,
+            @AuthenticationPrincipal Long userId) {
+        Map<String, Object> result = exchangeService.readyCountdown(exchangeId, userId);
+        return ResponseEntity.ok(ApiResponse.success(result));
     }
 }
