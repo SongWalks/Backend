@@ -30,4 +30,7 @@ public interface VerificationLogRepository extends JpaRepository<VerificationLog
             @Param("exchangeId") Long exchangeId,
             @Param("status") VerifyStatus status,
             @Param("verifyType") VerifyType verifyType);
+
+    //QR 인증 후 상대방의 캡처 이미지 조회
+    Optional<VerificationLog> findTopByExchangeIdAndUserIdOrderByCreatedAtDesc(Long exchangeId, Long userId);
 }
