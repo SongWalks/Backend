@@ -19,15 +19,16 @@ import com.sookmyung.swapclass.global.exception.ErrorCode;
 import com.sookmyung.swapclass.domain.notification.service.NotificationService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.Duration;
-import java.time.Instant;
-import java.time.LocalDateTime;
-import java.time.ZoneId;
+import java.time.*;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
+import java.util.Map;
+import java.util.concurrent.TimeUnit;
 
 @Service
 @RequiredArgsConstructor
@@ -194,5 +195,49 @@ public class ExchangeService {
     private ChatRoom getChatRoomByExchange(Long exchangeId) {
         return chatRoomRepository.findByExchangeId(exchangeId)
                 .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND));
+    }
+
+    private static final String COUNTDOWN_READY_PREFIX = "countdown:ready:";
+    private static final int COUNTDOWN_SECONDS = 10;
+    private final RedisTemplate<String, String> redisTemplate;
+    private final SimpMessagingTemplate messagingTemplate;
+
+    @Transactional
+    public Map<String, Object> readyCountdown(Long exchangeId, Long userId) {
+        Exchange exchange = getExchangeAndValidateParticipant(exchangeId, userId);
+        ChatRoom chatRoom = getChatRoomByExchange(exchangeId);
+
+        // Redis에 준비 완료 저장
+        String redisKey = COUNTDOWN_READY_PREFIX + exchangeId + ":" + userId;
+        redisTemplate.opsForValue().set(redisKey, "ready", 10, TimeUnit.MINUTES);
+
+        // 상대방 userId 찾기
+        Long partnerUserId = exchange.getPostA().getUser().getId().equals(userId)
+                ? exchange.getPostB().getUser().getId()
+                : exchange.getPostA().getUser().getId();
+
+        // 상대방도 준비됐는지 확인
+        String partnerRedisKey = COUNTDOWN_READY_PREFIX + exchangeId + ":" + partnerUserId;
+        boolean partnerReady = Boolean.TRUE.equals(redisTemplate.hasKey(partnerRedisKey));
+
+        if (partnerReady) {
+            // 양쪽 모두 준비됐으면 카운트다운 시작
+            LocalDateTime countdownEndsAt = LocalDateTime.now(ZoneOffset.UTC).plusSeconds(COUNTDOWN_SECONDS);
+            exchange.startCountdown(countdownEndsAt);
+
+            // Redis 정리
+            redisTemplate.delete(redisKey);
+            redisTemplate.delete(partnerRedisKey);
+
+            // WebSocket으로 카운트다운 시작 알림
+            messagingTemplate.convertAndSend(
+                    "/topic/chat-rooms/" + chatRoom.getId(),
+                    Map.of("type", "COUNTDOWN_START", "countdownEndsAt", countdownEndsAt.toString())
+            );
+
+            return Map.of("status", "COUNTDOWN_STARTED", "countdownEndsAt", countdownEndsAt.toString());
+        }
+
+        return Map.of("status", "WAITING", "message", "상대방 대기 중입니다.");
     }
 }
