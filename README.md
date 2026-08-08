@@ -1,4 +1,4 @@
-# SwapClass — Backend
+# SwapClass Backend
 
 > 숙대생들의 수강신청을 구조하는 간편하고 안전한 강의 교환 플랫폼.   
 > 교환 매칭 및 강의 보유 인증 자동화.
