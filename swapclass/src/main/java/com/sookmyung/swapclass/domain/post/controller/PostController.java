@@ -36,15 +36,17 @@ public class PostController {
         return ApiResponse.success(response, "게시글이 등록되었습니다.");
     }
 
-    // 게시글 피드 조회 (매칭 전, 최신순, 오프셋 페이징. 학과 필터 선택)
+    // 게시글 피드 조회 (매칭 전, 최신순, 오프셋 페이징. 학과 필터·키워드 검색 선택)
+    // keyword: 버릴 과목명·원하는 과목명 부분 일치(LIKE)
     @GetMapping
     public ApiResponse<PageResponse<PostFeedResponse>> getFeed(
             @AuthenticationPrincipal Long userId,
             @RequestParam(required = false) String dept,
+            @RequestParam(required = false) String keyword,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "20") int size
     ) {
-        return ApiResponse.success(postService.getFeed(userId, dept, page, size));
+        return ApiResponse.success(postService.getFeed(userId, dept, keyword, page, size));
     }
 
     // [퀵필터] 내 버릴 과목을 원하는(want) 타 유저 글 보기

@@ -15,8 +15,9 @@ import java.util.List;
 
 public interface PostRepository extends JpaRepository<Post, Long> {
 
-    // [피드] 특정 상태(MATCHABLE) · 본인 글 제외 · 차단 유저 양방향 제외 · 탈퇴 유저 글 제외 · 학과 필터(선택) · 최신순 페이징
+    // [피드] 특정 상태(MATCHABLE) · 본인 글 제외 · 차단 유저 양방향 제외 · 탈퇴 유저 글 제외 · 학과 필터(선택) · 키워드 검색(선택) · 최신순 페이징
     // 비로그인(userId == null) 시 본인 제외·차단 필터를 건너뛰고 전체 공개 글을 노출
+    // keyword: 버릴 과목명(discardCourse.name) 또는 원하는 과목명(wantedCourses.course.name) 부분 일치(LIKE)
     @Query("""
         select p from Post p
         where p.status = :status
@@ -29,11 +30,18 @@ public interface PostRepository extends JpaRepository<Post, Long> {
               select b.blocker.id from UserBlock b where b.blocked.id = :userId
           ))
           and (:dept is null or p.discardCourse.department = :dept)
+          and (:keyword is null
+               or p.discardCourse.name like concat('%', :keyword, '%')
+               or exists (
+                   select 1 from PostWantedCourse w
+                   where w.post = p and w.course.name like concat('%', :keyword, '%')
+               ))
         order by p.createdAt desc
         """)
     Page<Post> findFeed(@Param("status") PostStatus status,
                         @Param("userId") Long userId,
                         @Param("dept") String dept,
+                        @Param("keyword") String keyword,
                         Pageable pageable);
 
     // [내 게시글] 상태 필터 있음
