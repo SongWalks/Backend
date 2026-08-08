@@ -1,5 +1,7 @@
 package com.sookmyung.swapclass.domain.verification.service;
 
+import com.sookmyung.swapclass.domain.exchange.entity.Exchange;
+import com.sookmyung.swapclass.domain.exchange.repository.ExchangeRepository;
 import com.sookmyung.swapclass.domain.user.entity.User;
 import com.sookmyung.swapclass.domain.user.repository.UserRepository;
 import com.sookmyung.swapclass.domain.verification.dto.response.QrIssueResponse;
@@ -13,6 +15,7 @@ import com.sookmyung.swapclass.global.exception.ErrorCode;
 import com.sookmyung.swapclass.infra.qr.QrService;
 import com.sookmyung.swapclass.infra.s3.S3Service;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.jpa.repository.support.SimpleJpaRepository;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -44,6 +47,7 @@ public class VerificationService {
 
     private static final String QR_TOKEN_PREFIX = "qr:token:";
     private static final long QR_EXPIRE_MINUTES = 10;
+    private final ExchangeRepository exchangeRepository;
 
     @Transactional
     public QrIssueResponse issueQr(Long exchangeId, Long userId) {
@@ -148,5 +152,23 @@ public class VerificationService {
         }
 
         return new VerifyUploadResponse(qrValid, qrValid ? "PASSED" : "FAILED", message);
+    }
+
+    // 상대방 캡처 이미지 조회
+    public String getCounterpartCaptureImage(Long exchangeId, Long userId) {
+
+        Exchange exchange = exchangeRepository.findById(exchangeId)
+                .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND));
+
+        // 상대방 userId 찾기
+        Long partnerUserId = exchange.getPostA().getUser().getId().equals(userId)
+                ? exchange.getPostB().getUser().getId()
+                : exchange.getPostA().getUser().getId();
+
+        // 상대방의 가장 최근 PASSED 또는 FAILED 캡처 이미지 조회
+        return verificationLogRepository
+                .findTopByExchangeIdAndUserIdOrderByCreatedAtDesc(exchangeId, partnerUserId)
+                .map(VerificationLog::getImageUrl)
+                .orElse(null);
     }
 }

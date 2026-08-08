@@ -11,6 +11,9 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.http.MediaType;
 
+import java.util.HashMap;
+import java.util.Map;
+
 @RestController
 @RequestMapping("/api/exchanges")
 @RequiredArgsConstructor
@@ -35,5 +38,16 @@ public class VerificationController {
             @AuthenticationPrincipal Long userId) {  
         VerifyUploadResponse response = verificationService.uploadAndVerify(exchangeId, userId, image);
         return ResponseEntity.ok(ApiResponse.success(response));
+    }
+
+    // 상대방 캡처 이미지 조회
+    @GetMapping("/{exchangeId}/verifications/counterpart-capture")
+    public ResponseEntity<ApiResponse<Map<String, Object>>> getCounterpartCapture(
+            @PathVariable Long exchangeId,
+            @AuthenticationPrincipal Long userId) {
+        String imageUrl = verificationService.getCounterpartCaptureImage(exchangeId, userId);
+        Map<String, Object> data = new HashMap<>();
+        data.put("imageUrl", imageUrl);
+        return ResponseEntity.ok(ApiResponse.success(data));
     }
 }
