@@ -2,6 +2,8 @@
 
 > 숙대생들의 수강신청을 구조하는 간편하고 안전한 강의 교환 플랫폼.   
 > 교환 매칭 및 강의 보유 인증 자동화.
+> 
+서비스 링크: https://soo-frontend-brown.vercel.app
 
 ---
 
@@ -39,6 +41,9 @@ SwapClass는 수강신청 기간에 원하는 강의를 얻기 위해 서로 강
 | Push | FCM (Firebase Cloud Messaging) |
 
 ---
+
+## Demo Video
+[![Demo Video](https://img.youtube.com/vi/ThDeejwzZzE/maxresdefault.jpg)](https://youtu.be/ThDeejwzZzE)
 
 ## 📁 프로젝트 구조
 
@@ -120,10 +125,6 @@ REDIS_PORT=6379
 ## API 문서
 
 - Swagger: https://swapclass.duckdns.org/swagger-ui/index.html
-
-## 배포
-
-- 서비스 링크: https://soo-frontend-git-develop-song-walks.vercel.app
 ---
 
 ## Role

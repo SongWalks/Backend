@@ -104,6 +104,7 @@ public class SecurityConfig {
                 "http://localhost:8080",
                 "https://soo-frontend-git-develop-song-walks.vercel.app",
                 "https://swapclass.duckdns.org"
+                "https://soo-frontend-brown.vercel.app"
         ));
         config.setAllowedMethods(List.of("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
         config.setAllowedHeaders(List.of("*"));
